@@ -1,0 +1,2310 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bakki UI Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@500;700;800&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar sidebar-contemporary">
+        <div class="sidebar-main">
+          <div class="sidebar-brand contemporary-brand">
+            <div class="brand-mark"></div>
+            <div>
+              <div class="brand-title">Bakki Manager</div>
+              <div class="brand-subtitle">Forestry Management</div>
+            </div>
+          </div>
+
+          <button class="primary-sidebar-button contemporary-cta" data-open-map-task type="button">
+            <span class="cta-plus">+</span>
+            <span>Create Task</span>
+          </button>
+
+          <nav class="sidebar-nav contemporary-nav">
+            <button class="nav-item is-active" data-view="dashboard" data-title="Dashboard">
+              <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"></rect></svg>
+              </span>
+              <span>Dashboard</span>
+            </button>
+            <button class="nav-item" data-view="map-viewer" data-title="Map Viewer">
+              <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18L3.5 20.5V6L9 3.5M9 18l6-2.5M9 18V3.5M15 15.5l5.5 2.5V3.5L15 1m0 14.5V1"></path></svg>
+              </span>
+              <span>Map Viewer</span>
+            </button>
+            <button class="nav-item" data-view="map-management" data-title="Map Management">
+              <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h10M4 17h8"></path><path d="M18 14l3 3-6 6H12v-3l6-6z"></path></svg>
+              </span>
+              <span>Map Management</span>
+            </button>
+            <button class="nav-item" data-view="phase-summary" data-title="Planting Phases">
+              <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21c4.418 0 8-3.582 8-8S16.418 5 12 5 4 8.582 4 13s3.582 8 8 8z"></path><path d="M12 9v4l3 2"></path><path d="M8 3h8"></path></svg>
+              </span>
+              <span>Planting Phases</span>
+            </button>
+            <button class="nav-item" data-view="users" data-title="User Management">
+              <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path><circle cx="9.5" cy="7" r="3.5"></circle><path d="M20 8v6M17 11h6"></path></svg>
+              </span>
+              <span>User Management</span>
+            </button>
+            <button class="nav-item" data-view="species" data-title="Species Management">
+              <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22c4-4 6-7 6-10a6 6 0 0 0-12 0c0 3 2 6 6 10z"></path><path d="M12 9c1.8 0 3.5-.9 5-2.5"></path></svg>
+              </span>
+              <span>Species Management</span>
+            </button>
+            <button class="nav-item" data-view="task-management" data-title="Task Management">
+              <span class="nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+              </span>
+              <span>Task Management</span>
+            </button>
+          </nav>
+        </div>
+
+        <div class="sidebar-footer contemporary-footer">
+          <div class="utility-links contemporary-utility-links">
+            <button class="utility-link contemporary-utility-link" data-view="settings-general" data-title="General Settings">Settings</button>
+            <button class="utility-link contemporary-utility-link" data-view="support" data-title="Support">Support</button>
+          </div>
+          <div class="owner-card contemporary-owner-card">
+            <div class="owner-avatar contemporary-owner-avatar"></div>
+            <div>
+              <div class="owner-name">Erik Henderson</div>
+              <div class="owner-role">Chief Ranger</div>
+            </div>
+            <button class="owner-menu" aria-label="Profile menu">...</button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="main-shell">
+        <header class="topbar">
+          <div class="topbar-title" id="page-title">Dashboard</div>
+          <div class="topbar-search-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+            <input class="topbar-search" type="text" placeholder="Search data points..." />
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" aria-label="Notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V10a6 6 0 1 0-12 0v4.2a2 2 0 0 1-.6 1.4L4 17h5"></path><path d="M10 17a2 2 0 0 0 4 0"></path></svg>
+              <span class="notification-dot"></span>
+            </button>
+            <button class="topbar-cta" data-open-map-task type="button">Create Task</button>
+          </div>
+        </header>
+
+        <main class="page-wrap">
+          <section class="view is-active" id="view-dashboard">
+            <div class="page-content contemporary-dashboard">
+              <section class="contemporary-header">
+                <div>
+                  <h1 class="contemporary-hello">Hello, Alain</h1>
+                  <div class="contemporary-divider"></div>
+                </div>
+                <div class="local-time-block">
+                  <span>Local Time</span>
+                  <strong>14:32 PST</strong>
+                </div>
+              </section>
+
+              <section class="contemporary-grid">
+                <article class="active-phase-card">
+                  <div class="phase-card-copy">
+                    <div class="phase-card-eyebrow">Active Planting Phase</div>
+                    <div class="phase-card-percent">84%</div>
+                    <div class="phase-card-name">Sierra Ridge Restoration</div>
+                    <div class="phase-card-stats">
+                      <div>
+                        <span>Planted</span>
+                        <strong>12,480</strong>
+                      </div>
+                      <div>
+                        <span>Target</span>
+                        <strong>15,000</strong>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="phase-card-forest">
+                    <button class="contemporary-map-button" data-view="map-viewer" data-title="Map Viewer">
+                      <span>View Map</span>
+                      <span class="map-button-arrow">NE</span>
+                    </button>
+                    <div class="forest-watermark">SAFE EARTH WORK</div>
+                  </div>
+                </article>
+
+                <div class="contemporary-side-cards">
+                  <article class="contemporary-mini-card">
+                    <div>
+                      <div class="mini-card-label">Conditions</div>
+                      <div class="mini-card-value">24C / Sunny</div>
+                      <div class="mini-card-copy">Wind: 12km/h NW</div>
+                    </div>
+                    <svg class="mini-card-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.8">
+                      <circle cx="24" cy="24" r="8"></circle>
+                      <path d="M24 4v8M24 36v8M4 24h8M36 24h8M9.9 9.9l5.7 5.7M32.4 32.4l5.7 5.7M38.1 9.9l-5.7 5.7M15.6 32.4l-5.7 5.7"></path>
+                    </svg>
+                  </article>
+
+                  <article class="contemporary-mini-card biodiversity-card">
+                    <div class="mini-card-label">Biodiversity Index</div>
+                    <div class="biodiversity-row">
+                      <strong>12</strong>
+                      <span>Active Species</span>
+                    </div>
+                    <div class="species-stack">
+                      <span class="species-avatar species-avatar-a"></span>
+                      <span class="species-avatar species-avatar-b"></span>
+                      <span class="species-avatar species-avatar-count">+9</span>
+                    </div>
+                  </article>
+                </div>
+
+                <article class="zones-snippet-card">
+                  <div class="zones-card-head">
+                    <div class="zones-title">Active Zones</div>
+                    <div class="zones-live">Live Updates</div>
+                  </div>
+                  <div class="zones-map">
+                    <span class="zones-marker"></span>
+                    <div class="coordinates-panel">
+                      <span>Coordinates</span>
+                      <strong>47.8021 N, 123.6044 W</strong>
+                    </div>
+                  </div>
+                </article>
+
+                <section class="contemporary-tasks-panel">
+                  <div class="tasks-panel-head">
+                    <div class="tasks-panel-title">Task Management</div>
+                    <button class="all-tasks-link" data-view="task-management" data-title="Task Management">All Tasks</button>
+                  </div>
+
+                  <div class="contemporary-task-list">
+                    <article class="contemporary-task-item">
+                      <div class="task-item-start">
+                        <div class="task-item-icon task-item-icon-green">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3c-2.2 3.1-4 5.3-4 8a4 4 0 0 0 8 0c0-2.7-1.8-4.9-4-8z"></path></svg>
+                        </div>
+                        <div>
+                          <h3>Soil Moisture Analysis</h3>
+                          <p>Zone 4B - High Priority</p>
+                        </div>
+                      </div>
+                      <div class="task-item-end">
+                        <strong>Due Today</strong>
+                        <span>Assigned to: Marcus</span>
+                      </div>
+                    </article>
+
+                    <article class="contemporary-task-item">
+                      <div class="task-item-start">
+                        <div class="task-item-icon">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 10.5L12 4l7 6.5V20H5v-9.5z"></path><path d="M9 20v-5h6v5"></path></svg>
+                        </div>
+                        <div>
+                          <h3>Wildlife Camera Check</h3>
+                          <p>Perimeter North - Routine</p>
+                        </div>
+                      </div>
+                      <div class="task-item-end">
+                        <strong>Due Tomorrow</strong>
+                        <span>Assigned to: Elena</span>
+                      </div>
+                    </article>
+
+                    <article class="contemporary-task-item">
+                      <div class="task-item-start">
+                        <div class="task-item-icon">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M7 7v10a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7"></path><path d="M9 11h6M10 3h4"></path></svg>
+                        </div>
+                        <div>
+                          <h3>Seedling Delivery</h3>
+                          <p>Main Hangar - Logistical</p>
+                        </div>
+                      </div>
+                      <div class="task-item-end">
+                        <strong>June 15</strong>
+                        <span>Unassigned</span>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-phase-summary">
+            <div class="page-content phase-main-figma-page" id="phase-summary-landing">
+              <header class="phase-main-figma-header">
+                <h1>Planting Phases</h1>
+                <button class="phase-main-figma-start-button" data-view="phase-setup-info" data-title="Start New Planting Phase">
+                  <img src="https://www.figma.com/api/mcp/asset/52c14856-e4ba-4d26-9b3b-377a49edd9d4" alt="" />
+                  <span>Start New Planting Phase</span>
+                </button>
+              </header>
+
+              <section class="phase-main-figma-grid">
+                <div class="phase-main-figma-timeline">
+                  <div class="phase-main-figma-section-label">
+                    <img src="https://www.figma.com/api/mcp/asset/f971fc54-72cf-405b-b2ac-2f291be40276" alt="" />
+                    <span>Operational Timeline</span>
+                  </div>
+
+                  <div class="phase-main-figma-timeline-list">
+                    <div class="phase-main-figma-timeline-line"></div>
+
+                    <article class="phase-main-figma-timeline-card is-active">
+                      <div class="phase-main-figma-timeline-dot"></div>
+                      <div class="phase-main-figma-phase-card">
+                        <div class="phase-main-figma-phase-card-top">
+                          <span class="phase-main-figma-badge is-active">Active</span>
+                          <span class="phase-main-figma-date">Sept - Nov 2024</span>
+                        </div>
+                        <h2>Bakki Spring 2026 - Mountains</h2>
+                        <div class="phase-main-figma-metrics">
+                          <span><img src="https://www.figma.com/api/mcp/asset/408c63f2-3227-4c66-9d5a-e35d36368a40" alt="" />14,250 Saplings</span>
+                          <span><img src="https://www.figma.com/api/mcp/asset/e8c48f65-a9b2-4267-8675-42c81b3eb2d8" alt="" />12 Field Ops</span>
+                        </div>
+                      </div>
+                    </article>
+
+                    <article class="phase-main-figma-timeline-card is-complete">
+                      <div class="phase-main-figma-timeline-dot"></div>
+                      <div class="phase-main-figma-phase-card">
+                        <div class="phase-main-figma-phase-card-top">
+                          <span class="phase-main-figma-badge is-complete">Completed</span>
+                          <span class="phase-main-figma-date">Mar - May 2024</span>
+                        </div>
+                        <h2>Spring 2024 - Volcanic Ridge</h2>
+                      </div>
+                    </article>
+
+                    <article class="phase-main-figma-timeline-card is-complete">
+                      <div class="phase-main-figma-timeline-dot"></div>
+                      <div class="phase-main-figma-phase-card">
+                        <div class="phase-main-figma-phase-card-top">
+                          <span class="phase-main-figma-badge is-complete">Completed</span>
+                          <span class="phase-main-figma-date">Nov 23 - Jan 24</span>
+                        </div>
+                        <h2>Winter 2023 - Arctic Birch Blast</h2>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+
+                <div class="phase-main-figma-overview">
+                  <div class="phase-main-figma-overview-head">
+                    <h2>Phase Overview: Bakki Spring 2026 Mountains</h2>
+                    <button class="phase-main-figma-export-button">
+                      <span>Export Phase Data</span>
+                      <img src="https://www.figma.com/api/mcp/asset/7e8bf523-b18d-4af5-b401-fb9961b0cb72" alt="" />
+                    </button>
+                  </div>
+
+                  <div class="phase-main-figma-card-row">
+                    <article class="phase-main-figma-team-card">
+                      <div class="phase-main-figma-card-head">
+                        <h3>Field Operations Team</h3>
+                        <span class="phase-main-figma-total-chip"><strong>12</strong><span>Total</span></span>
+                      </div>
+
+                      <div class="phase-main-figma-member-list">
+                        <div class="phase-main-figma-member-row">
+                          <div class="phase-main-figma-member-main">
+                            <img src="https://www.figma.com/api/mcp/asset/4599b937-2678-411b-a8f3-b698097597ca" alt="" />
+                            <div>
+                              <strong>Sigurður Jónsson</strong>
+                              <span>Operations Lead</span>
+                            </div>
+                          </div>
+                          <img class="phase-main-figma-member-action" src="https://www.figma.com/api/mcp/asset/085bf764-d92f-480e-bd87-db21cc79975b" alt="" />
+                        </div>
+
+                        <div class="phase-main-figma-member-row">
+                          <div class="phase-main-figma-member-main">
+                            <img src="https://www.figma.com/api/mcp/asset/63250942-cc08-44f5-bdf1-496fea16ac26" alt="" />
+                            <div>
+                              <strong>Elva Thorsteinsson</strong>
+                              <span>Soil Specialist</span>
+                            </div>
+                          </div>
+                          <img class="phase-main-figma-member-action" src="https://www.figma.com/api/mcp/asset/085bf764-d92f-480e-bd87-db21cc79975b" alt="" />
+                        </div>
+
+                        <div class="phase-main-figma-member-row">
+                          <div class="phase-main-figma-member-main">
+                            <img src="https://www.figma.com/api/mcp/asset/388dc11f-854f-4a83-9037-ded5bdd6deb9" alt="" />
+                            <div>
+                              <strong>Kristján Pétur</strong>
+                              <span>Data Analyst</span>
+                            </div>
+                          </div>
+                          <img class="phase-main-figma-member-action" src="https://www.figma.com/api/mcp/asset/085bf764-d92f-480e-bd87-db21cc79975b" alt="" />
+                        </div>
+                      </div>
+
+                      <button class="phase-main-figma-secondary-button">View All Members</button>
+                    </article>
+
+                    <article class="phase-main-figma-insights-card">
+                      <h3>Phase Planning Insights</h3>
+
+                      <div class="phase-main-figma-insight-block">
+                        <div class="phase-main-figma-insight-head">
+                          <span>Soil Quality Tracking</span>
+                          <strong>High (92%)</strong>
+                        </div>
+                        <div class="phase-main-figma-progress">
+                          <span></span>
+                        </div>
+                      </div>
+
+                      <div class="phase-main-figma-insight-row">
+                        <img src="https://www.figma.com/api/mcp/asset/71b909da-1a2b-4dd7-9834-111523780e6e" alt="" />
+                        <div class="phase-main-figma-insight-copy">
+                          <div class="phase-main-figma-insight-head">
+                            <span>Weather Correlation</span>
+                            <strong>Stable</strong>
+                          </div>
+                          <p>Projected 12-day window for optimal root setting.</p>
+                        </div>
+                      </div>
+
+                      <div class="phase-main-figma-insight-row phase-main-figma-insight-row-border">
+                        <img src="https://www.figma.com/api/mcp/asset/8a50e8c7-ffea-4a8d-b751-adb59bf79a18" alt="" />
+                        <p>Nitrogen levels optimal in sector G4-G9.</p>
+                      </div>
+                    </article>
+                  </div>
+
+                  <article class="phase-main-figma-map-card">
+                    <img src="https://www.figma.com/api/mcp/asset/66bf963e-f55f-4867-82b4-eb8d8173356d" alt="" />
+                    <div class="phase-main-figma-map-overlay"></div>
+                    <div class="phase-main-figma-map-copy">
+                      <span>Geospatial Overlay</span>
+                      <strong>Glacier Edge Sector Focus</strong>
+                    </div>
+                    <span class="phase-main-figma-live-chip">Live Feed</span>
+                  </article>
+                </div>
+              </section>
+
+              <section class="phase-main-figma-banner">
+                <img class="phase-main-figma-banner-mark" src="https://www.figma.com/api/mcp/asset/e136f61e-1e98-462f-affb-99661983fd0f" alt="" />
+                <div class="phase-main-figma-banner-copy">
+                  <span>Strategic Planning</span>
+                  <strong>Initialize Next Seasonal Phase</strong>
+                  <p>Pre-calculating resource allocation and terrain feasibility for the Spring 2025 expansion.</p>
+                </div>
+                <div class="phase-main-figma-banner-actions">
+                  <button class="phase-main-figma-banner-outline">View Projections</button>
+                  <button class="phase-main-figma-banner-primary" data-view="phase-setup-info" data-title="Start New Planting Phase">Begin Setup</button>
+                </div>
+              </section>
+            </div>
+
+          </section>
+
+          <section class="view" id="view-phase-setup-info">
+            <div class="page-content phase-wizard-page">
+              <section class="phase-wizard-screen is-active">
+                <header class="phase-wizard-header">
+                  <div class="phase-wizard-header-left">
+                    <button class="phase-wizard-icon-button phase-wizard-back-button" data-view="phase-summary" data-title="Planting Phases" aria-label="Back to planting phases">
+                      <img src="https://www.figma.com/api/mcp/asset/34ac33af-2baa-4166-ba2a-aaa3f29c2714" alt="" />
+                    </button>
+                    <h1>Start New Planting Phase</h1>
+                  </div>
+                  <div class="phase-wizard-header-actions">
+                    <button class="phase-wizard-icon-button" aria-label="Help">
+                      <img src="https://www.figma.com/api/mcp/asset/cfcbd4df-1815-44c2-912d-9f137b60a272" alt="" />
+                    </button>
+                    <button class="phase-wizard-icon-button" aria-label="Profile">
+                      <img src="https://www.figma.com/api/mcp/asset/f8b8327e-09a9-497c-926b-b606bdfb9f35" alt="" />
+                    </button>
+                  </div>
+                </header>
+
+                <div class="phase-wizard-stepper phase-wizard-progress-1">
+                  <div class="phase-wizard-step-line"></div>
+                  <div class="phase-wizard-step-line phase-wizard-step-line-active"></div>
+                  <div class="phase-wizard-step is-active">
+                    <div class="phase-wizard-step-index">1</div>
+                    <span>Phase Info</span>
+                  </div>
+                  <div class="phase-wizard-step">
+                    <div class="phase-wizard-step-index">2</div>
+                    <span>Team</span>
+                  </div>
+                  <div class="phase-wizard-step">
+                    <div class="phase-wizard-step-index">3</div>
+                    <span>Areas</span>
+                  </div>
+                  <div class="phase-wizard-step">
+                    <div class="phase-wizard-step-index">4</div>
+                    <span>Confirm</span>
+                  </div>
+                </div>
+
+                <div class="phase-wizard-body phase-wizard-body-centered">
+                  <article class="phase-wizard-card phase-wizard-foundation-card">
+                    <div class="phase-wizard-card-copy">
+                      <h2>Phase Foundation</h2>
+                      <p>Define the temporal and descriptive parameters for this restoration cycle on the volcanic slopes.</p>
+                    </div>
+
+                    <div class="phase-wizard-form-grid">
+                      <label class="phase-wizard-field phase-wizard-field-full">
+                        <span>Phase Name</span>
+                        <div class="phase-wizard-input">e.g., Spring 2025 - Hekla Slopes</div>
+                      </label>
+
+                      <label class="phase-wizard-field">
+                        <span>Start Date</span>
+                        <div class="phase-wizard-input phase-wizard-input-with-icon">
+                          <strong>mm/dd/yyyy</strong>
+                        </div>
+                      </label>
+
+                      <label class="phase-wizard-field">
+                        <span>Expected End Date</span>
+                        <div class="phase-wizard-input phase-wizard-input-with-icon">
+                          <strong>mm/dd/yyyy</strong>
+                        </div>
+                      </label>
+
+                      <label class="phase-wizard-field phase-wizard-field-full">
+                        <span>Description</span>
+                        <div class="phase-wizard-textarea">Outline the primary goals, target species, and ecological impact expectations...</div>
+                      </label>
+                    </div>
+                  </article>
+                </div>
+
+                <footer class="phase-wizard-footer">
+                  <button class="phase-wizard-footer-link" data-view="phase-summary" data-title="Planting Phases">Cancel</button>
+                  <button class="phase-wizard-primary" data-view="phase-setup-team" data-title="Start New Planting Phase">
+                    <span>Next Step: Team</span>
+                    <img src="https://www.figma.com/api/mcp/asset/0563bc0d-14b4-4c5a-9a3a-647f56b32f74" alt="" />
+                  </button>
+                </footer>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-phase-setup-team">
+            <div class="page-content phase-wizard-page">
+              <section class="phase-wizard-screen is-active">
+                <header class="phase-wizard-header">
+                  <div class="phase-wizard-header-left">
+                    <button class="phase-wizard-icon-button phase-wizard-back-button" data-view="phase-setup-info" data-title="Start New Planting Phase" aria-label="Back to phase info">
+                      <img src="https://www.figma.com/api/mcp/asset/93671841-bed3-46c2-bf40-1404a62c0a4f" alt="" />
+                    </button>
+                    <h1>Start New Planting Phase</h1>
+                  </div>
+                  <div class="phase-wizard-header-actions">
+                    <button class="phase-wizard-icon-button" aria-label="Help">
+                      <img src="https://www.figma.com/api/mcp/asset/19a3de7a-adf8-462e-bf63-eb69a0d77fa2" alt="" />
+                    </button>
+                    <button class="phase-wizard-icon-button" aria-label="Profile">
+                      <img src="https://www.figma.com/api/mcp/asset/59799868-82f5-408a-8e9a-6c98a25f5976" alt="" />
+                    </button>
+                  </div>
+                </header>
+
+                <div class="phase-wizard-stepper phase-wizard-progress-2">
+                  <div class="phase-wizard-step-line"></div>
+                  <div class="phase-wizard-step-line phase-wizard-step-line-active"></div>
+                  <div class="phase-wizard-step is-complete">
+                    <div class="phase-wizard-step-index">1</div>
+                    <span>Phase Info</span>
+                  </div>
+                  <div class="phase-wizard-step is-active">
+                    <div class="phase-wizard-step-index">2</div>
+                    <span>Team</span>
+                  </div>
+                  <div class="phase-wizard-step">
+                    <div class="phase-wizard-step-index">3</div>
+                    <span>Areas</span>
+                  </div>
+                  <div class="phase-wizard-step">
+                    <div class="phase-wizard-step-index">4</div>
+                    <span>Confirm</span>
+                  </div>
+                </div>
+
+                <div class="phase-wizard-body phase-wizard-body-team">
+                  <div class="phase-wizard-team-layout">
+                    <article class="phase-wizard-card phase-wizard-team-setup-card">
+                      <div class="phase-wizard-card-copy">
+                        <h2>Team Setup</h2>
+                        <p>Assign leads, generate helper accounts, and stage the field crew for this planting phase using the same workflow language as the rest of the wizard.</p>
+                      </div>
+
+                      <div class="phase-wizard-form-grid">
+                        <label class="phase-wizard-field phase-wizard-field-full">
+                          <span>Field Lead</span>
+                          <div class="phase-wizard-search-select">
+                            <span>Sigurður Jónsson</span>
+                            <img src="https://www.figma.com/api/mcp/asset/4fd60194-9a57-458c-9f76-e4f11c9dcc12" alt="" />
+                          </div>
+                        </label>
+
+                        <label class="phase-wizard-field">
+                          <span>Helper Account Batch</span>
+                          <div class="phase-wizard-input">Generate 12 temporary helpers</div>
+                        </label>
+
+                        <label class="phase-wizard-field">
+                          <span>Crew Rotation</span>
+                          <div class="phase-wizard-input">Volcanic Ridge / Morning Shift</div>
+                        </label>
+
+                        <label class="phase-wizard-field phase-wizard-field-full">
+                          <span>Operational Notes</span>
+                          <div class="phase-wizard-textarea">Brief the team on wind exposure, staging zones, sapling handling, and daily check-in protocol before field deployment.</div>
+                        </label>
+                      </div>
+
+                      <section class="phase-wizard-config-block phase-wizard-config-block-team">
+                        <h3>Assign Core Crew</h3>
+                        <div class="phase-wizard-chip-row">
+                          <span class="phase-wizard-person-chip">Bj&ouml;rn M.<img src="https://www.figma.com/api/mcp/asset/bc449510-48f7-4463-9bb9-6a3c2f1a393f" alt="" /></span>
+                          <span class="phase-wizard-person-chip">Elin J.<img src="https://www.figma.com/api/mcp/asset/bc449510-48f7-4463-9bb9-6a3c2f1a393f" alt="" /></span>
+                          <span class="phase-wizard-person-chip">Hakon A.<img src="https://www.figma.com/api/mcp/asset/bc449510-48f7-4463-9bb9-6a3c2f1a393f" alt="" /></span>
+                          <span class="phase-wizard-person-chip">Silja F.<img src="https://www.figma.com/api/mcp/asset/bc449510-48f7-4463-9bb9-6a3c2f1a393f" alt="" /></span>
+                        </div>
+                      </section>
+
+                      <section class="phase-wizard-soil-note">
+                        <img src="https://www.figma.com/api/mcp/asset/017e8ed2-0e59-491c-bbdc-0c2d2e2df511" alt="" />
+                        <div>
+                          <span>Helper Account Policy</span>
+                          <p>Generated helper credentials remain attached to this phase for audit history, but the owner can still reassign or deactivate them later.</p>
+                        </div>
+                      </section>
+                    </article>
+
+                    <aside class="phase-wizard-team-card phase-wizard-team-card-setup">
+                      <div class="phase-wizard-team-card-head">
+                        <h3>Prepared Crew</h3>
+                        <img src="https://www.figma.com/api/mcp/asset/7aa6efb8-1cf0-4d25-aa54-c03503f9f936" alt="" />
+                      </div>
+
+                      <div class="phase-wizard-team-list">
+                        <article class="phase-wizard-team-member">
+                          <img src="https://www.figma.com/api/mcp/asset/174e3b8e-9cdf-4410-ad3b-9dbee585ba4a" alt="Sigurður Jónsson" />
+                          <div>
+                            <strong>Sigurður Jónsson</strong>
+                            <span>Operations Lead</span>
+                          </div>
+                        </article>
+                        <article class="phase-wizard-team-member">
+                          <img src="https://www.figma.com/api/mcp/asset/4d3f32f4-a42a-4a7f-b292-db568697686e" alt="Elva Thorsteinsson" />
+                          <div>
+                            <strong>Elva Thorsteinsson</strong>
+                            <span>Soil Specialist</span>
+                          </div>
+                        </article>
+                        <article class="phase-wizard-team-member">
+                          <img src="https://www.figma.com/api/mcp/asset/90a1c977-2031-43bd-b266-058df4d3f4fe" alt="Kristján Pétur" />
+                          <div>
+                            <strong>Kristján Pétur</strong>
+                            <span>Data Analyst</span>
+                          </div>
+                        </article>
+                        <div class="phase-wizard-team-extra">+ 9 Helper Accounts Prepared</div>
+                      </div>
+
+                      <div class="phase-wizard-team-summary">
+                        <div>
+                          <span>Lead Crew</span>
+                          <strong>3 assigned</strong>
+                        </div>
+                        <div>
+                          <span>Temporary Helpers</span>
+                          <strong>12 generated</strong>
+                        </div>
+                      </div>
+                    </aside>
+                  </div>
+                </div>
+
+                <footer class="phase-wizard-footer">
+                  <button class="phase-wizard-footer-link phase-wizard-footer-back" data-view="phase-setup-info" data-title="Start New Planting Phase">
+                    <img src="https://www.figma.com/api/mcp/asset/82f4561f-ee02-48a2-ba6c-1c6cb61f39f8" alt="" />
+                    <span>Back to Phase Info</span>
+                  </button>
+                  <div class="phase-wizard-footer-actions">
+                    <button class="phase-wizard-footer-link">Save Draft</button>
+                    <button class="phase-wizard-primary" data-view="phase-setup-areas" data-title="Start New Planting Phase">
+                      <span>Next Step: Mapping</span>
+                      <img src="https://www.figma.com/api/mcp/asset/226470ae-bcee-4e48-b463-ce7ea194600a" alt="" />
+                    </button>
+                  </div>
+                </footer>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-phase-setup-areas">
+            <div class="page-content phase-wizard-page">
+              <section class="phase-wizard-screen is-active">
+                <header class="phase-wizard-header">
+                  <div class="phase-wizard-header-left">
+                    <button class="phase-wizard-icon-button phase-wizard-back-button" data-view="phase-setup-team" data-title="Start New Planting Phase" aria-label="Back to team">
+                      <img src="https://www.figma.com/api/mcp/asset/cc330899-6c53-4665-a6e0-953373096e84" alt="" />
+                    </button>
+                    <h1>Start New Planting Phase</h1>
+                  </div>
+                  <div class="phase-wizard-header-actions">
+                    <button class="phase-wizard-icon-button" aria-label="Help">
+                      <img src="https://www.figma.com/api/mcp/asset/c2f0ba6d-3717-441f-8aa8-4f8aac53ebf9" alt="" />
+                    </button>
+                    <button class="phase-wizard-icon-button" aria-label="Profile">
+                      <img src="https://www.figma.com/api/mcp/asset/8d265e48-bf9c-4045-90de-0c0f19665c6e" alt="" />
+                    </button>
+                  </div>
+                </header>
+
+                <div class="phase-wizard-stepper phase-wizard-progress-3">
+                  <div class="phase-wizard-step-line"></div>
+                  <div class="phase-wizard-step-line phase-wizard-step-line-active"></div>
+                  <div class="phase-wizard-step is-complete">
+                    <div class="phase-wizard-step-index">1</div>
+                    <span>Phase Info</span>
+                  </div>
+                  <div class="phase-wizard-step is-complete">
+                    <div class="phase-wizard-step-index">2</div>
+                    <span>Team</span>
+                  </div>
+                  <div class="phase-wizard-step is-active">
+                    <div class="phase-wizard-step-index">3</div>
+                    <span>Areas</span>
+                  </div>
+                  <div class="phase-wizard-step">
+                    <div class="phase-wizard-step-index">4</div>
+                    <span>Confirm</span>
+                  </div>
+                </div>
+
+                <div class="phase-wizard-body phase-wizard-body-map">
+                  <div class="phase-wizard-map-layout">
+                    <section class="phase-wizard-map-stage">
+                      <div class="phase-wizard-map-image">
+                        <img src="https://www.figma.com/api/mcp/asset/9f8fcc94-76c7-4bb0-bb8b-9eff0274bd2e" alt="" />
+                        <div class="phase-wizard-map-saturation"></div>
+                      </div>
+                      <svg class="phase-wizard-map-overlay" viewBox="0 0 800 607" preserveAspectRatio="none" aria-hidden="true">
+                        <polygon class="phase-wizard-zone phase-wizard-zone-active" points="335,172 560,186 525,332 300,302"></polygon>
+                        <polygon class="phase-wizard-zone" points="602,108 720,136 686,268 575,244"></polygon>
+                        <polygon class="phase-wizard-zone" points="228,372 375,403 342,514 184,482"></polygon>
+                        <text x="425" y="240">ZONE ALPHA</text>
+                        <text x="625" y="192">ZONE BETA</text>
+                        <text x="245" y="445">ZONE GAMMA</text>
+                      </svg>
+
+                      <div class="phase-wizard-map-tools">
+                        <div class="phase-wizard-map-tool-stack">
+                          <button class="phase-wizard-map-tool">
+                            <img src="https://www.figma.com/api/mcp/asset/197b7a10-8fc8-488b-9509-fe2583538d1c" alt="" />
+                          </button>
+                          <button class="phase-wizard-map-tool">
+                            <img src="https://www.figma.com/api/mcp/asset/b91f4344-4a1d-4c28-94e6-b84cf9f62ca4" alt="" />
+                          </button>
+                          <button class="phase-wizard-map-tool">
+                            <img src="https://www.figma.com/api/mcp/asset/43c5c3d1-46d5-4e02-992d-6251851fd12d" alt="" />
+                          </button>
+                        </div>
+                        <button class="phase-wizard-map-tool phase-wizard-map-tool-secondary">
+                          <img src="https://www.figma.com/api/mcp/asset/d84ddfca-7e0e-46f5-afc9-6e90b8f06a16" alt="" />
+                        </button>
+                      </div>
+
+                      <div class="phase-wizard-map-coordinates">
+                        <span>Selection Center:</span>
+                        <strong>64.1265&deg; N, 21.8174&deg; W</strong>
+                      </div>
+                    </section>
+
+                    <aside class="phase-wizard-selection-card">
+                      <div class="phase-wizard-selection-head">
+                        <h2>Selected Area</h2>
+                        <span class="phase-wizard-selection-chip">Active Selection</span>
+                      </div>
+
+                      <div class="phase-wizard-selection-copy">
+                        <span>Area Name</span>
+                        <strong>Zone Alpha: Vatnaj&ouml;kull North</strong>
+                        <p>Status: Ready for Reforestation</p>
+                      </div>
+
+                      <div class="phase-wizard-selection-stats">
+                        <article>
+                          <span>Total Area</span>
+                          <div>
+                            <strong>4.2</strong>
+                            <em>Hectares</em>
+                          </div>
+                        </article>
+                        <article>
+                          <span>Sapling Cap.</span>
+                          <div>
+                            <strong>12.6k</strong>
+                            <img src="https://www.figma.com/api/mcp/asset/2fdac9b2-f40a-47d5-a417-4c7d207e1528" alt="" />
+                          </div>
+                        </article>
+                      </div>
+
+                      <div class="phase-wizard-selection-divider"></div>
+
+                      <section class="phase-wizard-config-block">
+                        <h3>Task Configuration</h3>
+
+                        <label class="phase-wizard-mini-field">
+                          <span>Assign Personnel</span>
+                          <div class="phase-wizard-search-select">
+                            <span>Search planters...</span>
+                            <img src="https://www.figma.com/api/mcp/asset/9dbb3bb5-994b-4bd5-9411-2d86de32189e" alt="" />
+                          </div>
+                        </label>
+
+                        <div class="phase-wizard-chip-row">
+                          <span class="phase-wizard-person-chip">Bj&ouml;rn M.<img src="https://www.figma.com/api/mcp/asset/bc449510-48f7-4463-9bb9-6a3c2f1a393f" alt="" /></span>
+                          <span class="phase-wizard-person-chip">Elin J.<img src="https://www.figma.com/api/mcp/asset/bc449510-48f7-4463-9bb9-6a3c2f1a393f" alt="" /></span>
+                        </div>
+
+                        <label class="phase-wizard-mini-field">
+                          <span>Task Type</span>
+                        </label>
+
+                        <div class="phase-wizard-task-type-grid">
+                          <button class="phase-wizard-task-type is-active">
+                            <img src="https://www.figma.com/api/mcp/asset/1b0ab00d-87e6-4aa9-92ce-25af531cff22" alt="" />
+                            <strong>Planting</strong>
+                          </button>
+                          <button class="phase-wizard-task-type">
+                            <img src="https://www.figma.com/api/mcp/asset/f9ca28a1-5749-4ff7-8792-3715cd60a550" alt="" />
+                            <strong>Monitoring</strong>
+                          </button>
+                          <button class="phase-wizard-task-type">
+                            <img src="https://www.figma.com/api/mcp/asset/0e51747a-4127-4f2d-8eaa-6cabcdc556c6" alt="" />
+                            <strong>Fertilizing</strong>
+                          </button>
+                        </div>
+
+                        <label class="phase-wizard-mini-field">
+                          <span>Define Goal</span>
+                          <div class="phase-wizard-goal-input">e.g., 10k trees by Oct 15</div>
+                          <small>Specify count, survival target, or completion date.</small>
+                        </label>
+                      </section>
+
+                      <section class="phase-wizard-soil-note">
+                        <img src="https://www.figma.com/api/mcp/asset/ac79ebf5-2d15-4fe0-b672-bb033401f424" alt="" />
+                        <div>
+                          <span>Soil Analysis</span>
+                          <p>High volcanic content detected. Nutrient levels optimal for early-growth birch pioneers.</p>
+                        </div>
+                      </section>
+                    </aside>
+                  </div>
+                </div>
+
+                <footer class="phase-wizard-footer">
+                  <button class="phase-wizard-footer-link phase-wizard-footer-back" data-view="phase-setup-team" data-title="Start New Planting Phase">
+                    <img src="https://www.figma.com/api/mcp/asset/74305533-0be1-40e3-bc87-b95e2323dda1" alt="" />
+                    <span>Back to Team</span>
+                  </button>
+                  <div class="phase-wizard-footer-actions">
+                    <button class="phase-wizard-footer-link">Save Draft</button>
+                    <button class="phase-wizard-primary" data-view="phase-setup-confirm" data-title="Start New Planting Phase">
+                      <span>Next Step: Summary</span>
+                      <img src="https://www.figma.com/api/mcp/asset/c289ef57-da6f-441d-93c7-b3df1a2c8023" alt="" />
+                    </button>
+                  </div>
+                </footer>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-phase-setup-confirm">
+            <div class="page-content phase-wizard-page">
+              <section class="phase-wizard-screen is-active">
+                <header class="phase-wizard-header">
+                  <div class="phase-wizard-header-left">
+                    <button class="phase-wizard-icon-button phase-wizard-back-button" data-view="phase-setup-areas" data-title="Start New Planting Phase" aria-label="Back to mapping">
+                      <img src="https://www.figma.com/api/mcp/asset/48b9c762-5eba-4d6e-ab12-2a1bfb03500b" alt="" />
+                    </button>
+                    <h1>Start New Planting Phase</h1>
+                  </div>
+                  <div class="phase-wizard-header-actions">
+                    <button class="phase-wizard-icon-button" aria-label="Help">
+                      <img src="https://www.figma.com/api/mcp/asset/de036cdd-5641-4f9b-8031-cc9c72fc36ea" alt="" />
+                    </button>
+                    <button class="phase-wizard-icon-button" aria-label="Profile">
+                      <img src="https://www.figma.com/api/mcp/asset/eb43607b-b898-4645-a269-a3f35e6fae95" alt="" />
+                    </button>
+                  </div>
+                </header>
+
+                <div class="phase-wizard-stepper phase-wizard-progress-4">
+                  <div class="phase-wizard-step-line"></div>
+                  <div class="phase-wizard-step-line phase-wizard-step-line-active"></div>
+                  <div class="phase-wizard-step is-complete">
+                    <div class="phase-wizard-step-index">1</div>
+                    <span>Phase Info</span>
+                  </div>
+                  <div class="phase-wizard-step is-complete">
+                    <div class="phase-wizard-step-index">2</div>
+                    <span>Team</span>
+                  </div>
+                  <div class="phase-wizard-step is-complete">
+                    <div class="phase-wizard-step-index">3</div>
+                    <span>Areas</span>
+                  </div>
+                  <div class="phase-wizard-step is-active">
+                    <div class="phase-wizard-step-index">4</div>
+                    <span>Confirm</span>
+                  </div>
+                </div>
+
+                <div class="phase-wizard-body phase-wizard-body-summary">
+                  <div class="phase-wizard-summary-headline">
+                    <h2>Phase Summary</h2>
+                  </div>
+
+                  <div class="phase-wizard-summary-grid">
+                    <section class="phase-wizard-summary-card">
+                      <div class="phase-wizard-summary-card-head">
+                        <h3>Planting Zones</h3>
+                        <span>3 Zones Defined</span>
+                      </div>
+
+                      <div class="phase-wizard-zone-card-grid">
+                        <article class="phase-wizard-zone-card">
+                          <div class="phase-wizard-zone-card-head">
+                            <div>
+                              <strong>Zone 1</strong>
+                              <p>Western Slopes</p>
+                            </div>
+                            <img src="https://www.figma.com/api/mcp/asset/83134b16-b4d8-4b39-9669-ec52e9752483" alt="" />
+                          </div>
+                          <div class="phase-wizard-zone-metrics">
+                            <div>
+                              <span>Area</span>
+                              <strong>500m2</strong>
+                            </div>
+                            <div>
+                              <span>Planting Goal</span>
+                              <strong>400</strong>
+                            </div>
+                          </div>
+                          <div class="phase-wizard-zone-species">
+                            <span>Target Species</span>
+                            <div class="phase-wizard-species-tags">
+                              <em>Betula pubescens</em>
+                            </div>
+                          </div>
+                        </article>
+
+                        <article class="phase-wizard-zone-card">
+                          <div class="phase-wizard-zone-card-head">
+                            <div>
+                              <strong>Zone 12</strong>
+                              <p>Central Highlands</p>
+                            </div>
+                            <img src="https://www.figma.com/api/mcp/asset/a0594c6c-2201-4120-80fd-b40b4e8cf006" alt="" />
+                          </div>
+                          <div class="phase-wizard-zone-metrics">
+                            <div>
+                              <span>Area</span>
+                              <strong>300m2</strong>
+                            </div>
+                            <div>
+                              <span>Planting Goal</span>
+                              <strong>250</strong>
+                            </div>
+                          </div>
+                          <div class="phase-wizard-zone-species">
+                            <span>Target Species</span>
+                            <div class="phase-wizard-species-tags">
+                              <em>Salix lanata</em>
+                              <em>Moss Base</em>
+                            </div>
+                          </div>
+                        </article>
+                      </div>
+
+                      <div class="phase-wizard-map-preview">
+                        <img src="https://www.figma.com/api/mcp/asset/85666e6d-93da-4e58-b35d-fab3512dc777" alt="" />
+                        <div class="phase-wizard-map-preview-gradient"></div>
+                        <div class="phase-wizard-map-preview-label">
+                          <img src="https://www.figma.com/api/mcp/asset/04b8616f-f988-464c-9538-e78415aa9064" alt="" />
+                          <span>Map Preview</span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <aside class="phase-wizard-team-card">
+                      <div class="phase-wizard-team-card-head">
+                        <h3>Planting Team</h3>
+                        <img src="https://www.figma.com/api/mcp/asset/7aa6efb8-1cf0-4d25-aa54-c03503f9f936" alt="" />
+                      </div>
+
+                      <div class="phase-wizard-team-list">
+                        <article class="phase-wizard-team-member">
+                          <img src="https://www.figma.com/api/mcp/asset/174e3b8e-9cdf-4410-ad3b-9dbee585ba4a" alt="Alain de Cat" />
+                          <div>
+                            <strong>Alain de Cat</strong>
+                            <span>Owner</span>
+                          </div>
+                        </article>
+                        <article class="phase-wizard-team-member">
+                          <img src="https://www.figma.com/api/mcp/asset/4d3f32f4-a42a-4a7f-b292-db568697686e" alt="Mrs. Baue" />
+                          <div>
+                            <strong>Mrs. Baue</strong>
+                            <span>Tree Planter</span>
+                          </div>
+                        </article>
+                        <article class="phase-wizard-team-member">
+                          <img src="https://www.figma.com/api/mcp/asset/90a1c977-2031-43bd-b266-058df4d3f4fe" alt="Mr. Baue" />
+                          <div>
+                            <strong>Mr. Baue</strong>
+                            <span>Tree Planter</span>
+                          </div>
+                        </article>
+                        <div class="phase-wizard-team-extra">+ 3 Tree Planters Allocated</div>
+                      </div>
+
+                      <button class="phase-wizard-confirm-button" data-view="phase-summary" data-title="Planting Phases">
+                        <img src="https://www.figma.com/api/mcp/asset/8e9905bf-e919-4c87-b8ee-da4e72a3c24a" alt="" />
+                        <span>Confirm Deployment</span>
+                      </button>
+                    </aside>
+                  </div>
+                </div>
+
+                <footer class="phase-wizard-footer phase-wizard-footer-minimal">
+                  <button class="phase-wizard-footer-link phase-wizard-footer-back" data-view="phase-setup-areas" data-title="Start New Planting Phase">
+                    <img src="https://www.figma.com/api/mcp/asset/36069b43-0646-4995-8f5b-91a02954a01e" alt="" />
+                    <span>Back to Mapping</span>
+                  </button>
+                </footer>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-map-viewer">
+            <div class="page-content contemporary-map-page map-page-focus">
+              <section class="map-focus-shell">
+                <div class="map-focus-card">
+                  <div class="contemporary-map-canvas map-focus-canvas">
+                    <div class="map-focus-topbar">
+                      <div class="map-tool-pills">
+                        <span class="map-pill map-pill-active">Ranch</span>
+                        <span class="map-pill map-pill-active">Zones</span>
+                        <span class="map-pill">Read Only</span>
+                      </div>
+                      <div class="map-count-strip">
+                        <span id="map-zone-count">5 Zones</span>
+                        <span id="map-area-count">1 Ranch</span>
+                      </div>
+                    </div>
+
+                    <div class="map-focus-hint" id="map-focus-hint">Showing ranch boundary and real zone geometry from KML. Click a zone to focus it.</div>
+
+                    <div class="contemporary-map-controls">
+                      <button type="button" data-map-target="viewer" data-map-action="zoom-in">+</button>
+                      <button type="button" data-map-target="viewer" data-map-action="zoom-out">-</button>
+                      <button type="button" data-map-target="viewer" data-map-action="reset">O</button>
+                    </div>
+
+                    <div class="leaflet-map-surface" id="map-viewer-live-map" aria-label="Interactive zone and area map"></div>
+
+                    <div class="contemporary-map-legend">
+                      <div class="legend-title">Map Legend</div>
+                      <div class="legend-row"><span class="legend-swatch legend-swatch-ranch"></span><span>Ranch Boundary</span></div>
+                      <div class="legend-row"><span class="legend-swatch legend-swatch-zone"></span><span>Zone Boundary</span></div>
+                      <div class="legend-row"><span class="legend-swatch legend-swatch-selected"></span><span>Focused Zone</span></div>
+                    </div>
+
+                    <div class="contemporary-map-coordinates">
+                      <span>Coordinates</span>
+                      <strong id="map-viewer-coordinates">64.1265&deg; N, 21.8174&deg; W</strong>
+                    </div>
+
+                    <div class="contemporary-map-badge">Map Focus</div>
+                    <div class="map-area-overlay" id="map-area-overlay" hidden>
+                      <article class="map-area-figma-card" data-node-id="58:1510">
+                        <header class="map-area-figma-header" data-node-id="58:1512">
+                          <div class="map-area-figma-heading">
+                            <div class="map-area-figma-zone">Zone 3</div>
+                            <h2 id="map-area-title">Area: Lorenz Matteo</h2>
+                          </div>
+                          <button class="map-area-figma-close" aria-label="Close area details" data-close-area-card>
+                            <img src="https://www.figma.com/api/mcp/asset/8f5792da-6bf7-44e8-b7d7-f180b8236ed1" alt="" />
+                          </button>
+                        </header>
+
+                        <div class="map-area-figma-body" id="map-area-content" data-node-id="58:1519">
+                          <section class="map-area-figma-stats" data-node-id="58:1520">
+                            <article class="map-area-figma-stat">
+                              <div class="map-area-figma-stat-label">Species</div>
+                              <div class="map-area-figma-stat-row">
+                                <img src="https://www.figma.com/api/mcp/asset/a488db01-7e78-44e2-bae9-974cbd825ccb" alt="" />
+                                <strong>Downy Birch</strong>
+                              </div>
+                            </article>
+                            <article class="map-area-figma-stat">
+                              <div class="map-area-figma-stat-label">Est. Count</div>
+                              <div class="map-area-figma-stat-row">
+                                <img src="https://www.figma.com/api/mcp/asset/37aca934-5197-44a0-ad7c-6104380c0ad2" alt="" />
+                                <strong>1,240 Trees</strong>
+                              </div>
+                            </article>
+                          </section>
+
+                          <section class="map-area-figma-metrics" data-node-id="58:1535">
+                            <h3>Growth Metrics</h3>
+                            <div class="map-area-figma-metric-row">
+                              <span>Planting Date</span>
+                              <strong>May 14, 2023</strong>
+                            </div>
+                            <div class="map-area-figma-metric-row">
+                              <span>Primary Planter</span>
+                              <strong>Arnar Sigur&eth;sson</strong>
+                            </div>
+                            <div class="map-area-figma-metric-row">
+                              <span>Avg. Height</span>
+                              <strong class="metric-positive">1.2m</strong>
+                            </div>
+                            <div class="map-area-figma-metric-row">
+                              <span>Survival Rate</span>
+                              <strong class="metric-positive metric-emphasis">94.2%</strong>
+                            </div>
+                          </section>
+
+                          <section class="map-area-figma-photos" data-node-id="58:1559">
+                            <h3>Field Photos</h3>
+                            <div class="map-area-figma-photo-grid">
+                              <img src="https://www.figma.com/api/mcp/asset/a888fdcc-2932-4147-92d4-c49c2e001bd9" alt="Sapling Detail" />
+                              <img src="https://www.figma.com/api/mcp/asset/5756040f-5613-4977-9513-44c2444a3336" alt="Sector Overview" />
+                            </div>
+                          </section>
+
+                        </div>
+
+                        <footer class="map-area-figma-footer" data-node-id="58:1577">
+                          <button class="map-area-figma-action" data-open-map-task>
+                            <img src="https://www.figma.com/api/mcp/asset/1711b9c5-c371-48fc-af08-d2b529e3a515" alt="" />
+                            <span>Create Task</span>
+                          </button>
+                          <button class="map-area-figma-action">
+                            <img src="https://www.figma.com/api/mcp/asset/8a8baf23-65b6-498f-acaf-3dfe37e1b739" alt="" />
+                            <span>Edit Area Geometry</span>
+                          </button>
+                        </footer>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <div class="map-task-modal-shell" id="map-task-modal" hidden>
+                <div class="map-task-modal-backdrop" data-close-map-task></div>
+                <section class="map-task-figma-card" role="dialog" aria-modal="true" aria-labelledby="map-task-modal-title" data-node-id="58:1411">
+                  <header class="map-task-figma-header" data-node-id="58:1412">
+                    <div class="map-task-figma-heading">
+                      <h2 id="map-task-modal-title">Create New Task</h2>
+                      <p>Assign a new operational goal to the field team</p>
+                    </div>
+                    <button class="map-task-figma-close" aria-label="Close task creation" data-close-map-task>
+                      <img src="https://www.figma.com/api/mcp/asset/6558c278-514e-439c-b9a4-b8d1ccca92da" alt="" />
+                    </button>
+                  </header>
+
+                  <div class="map-task-figma-body" data-node-id="58:1421">
+                    <section class="map-task-figma-field">
+                      <h3>Task Type</h3>
+                      <div class="map-task-figma-type-grid">
+                        <button class="map-task-figma-type is-active">
+                          <img src="https://www.figma.com/api/mcp/asset/7336cf20-3fdc-4f40-9e21-0d5906bd07af" alt="" />
+                          <strong>Planting</strong>
+                        </button>
+                        <button class="map-task-figma-type">
+                          <img src="https://www.figma.com/api/mcp/asset/1186d159-42cc-485d-bfff-05191c12912d" alt="" />
+                          <strong>Monitoring</strong>
+                        </button>
+                        <button class="map-task-figma-type">
+                          <img src="https://www.figma.com/api/mcp/asset/0cc65f6f-b1f6-48d3-8a40-c852201bed78" alt="" />
+                          <strong>Fertilizing</strong>
+                        </button>
+                      </div>
+                    </section>
+
+                    <div class="map-task-figma-grid">
+                      <label class="map-task-figma-field">
+                        <span>Area Assignment</span>
+                        <div class="map-task-figma-input map-task-figma-select" id="map-task-area-value">
+                          <img src="https://www.figma.com/api/mcp/asset/c5d14460-203c-43ed-8d43-18b06635bcd6" alt="" />
+                          <strong>Select Sector/Zone</strong>
+                          <img class="map-task-figma-chevron" src="https://www.figma.com/api/mcp/asset/f5f60a2b-df16-4d47-a9f0-a7480bd7ea2d" alt="" />
+                        </div>
+                      </label>
+                      <label class="map-task-figma-field">
+                        <span>Personnel</span>
+                        <div class="map-task-figma-input map-task-figma-placeholder">
+                          <img src="https://www.figma.com/api/mcp/asset/c72e8dae-3c14-49b1-9a73-131c2671a620" alt="" />
+                          <span>Search team...</span>
+                        </div>
+                      </label>
+                    </div>
+
+                    <label class="map-task-figma-field">
+                      <span>Completion Deadline</span>
+                      <div class="map-task-figma-input map-task-figma-date">
+                        <img src="https://www.figma.com/api/mcp/asset/2093f6af-820e-4242-b61a-fa1628433fc7" alt="" />
+                        <strong>mm/dd/yyyy</strong>
+                      </div>
+                    </label>
+
+                    <label class="map-task-figma-field">
+                      <span>Task Description &amp; Goal</span>
+                      <div class="map-task-figma-textarea">Detail the specific planting requirements or monitoring metrics...</div>
+                    </label>
+                  </div>
+
+                  <footer class="map-task-figma-footer" data-node-id="58:1496">
+                    <button class="map-task-figma-draft">
+                      <img src="https://www.figma.com/api/mcp/asset/e275a00f-d343-4b9c-ae9b-4341b521d2a0" alt="" />
+                      <span>Save as Draft</span>
+                    </button>
+                    <div class="map-task-figma-actions">
+                      <button class="map-task-figma-cancel" data-close-map-task>Cancel</button>
+                      <button class="map-task-figma-deploy">
+                        <img src="https://www.figma.com/api/mcp/asset/9f9f6083-9c8f-45fa-af0a-2ead9bdf34a9" alt="" />
+                        <span>Deploy Task</span>
+                      </button>
+                    </div>
+                  </footer>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-map-management">
+            <div class="page-content map-management-figma-page" data-node-id="60:4046">
+              <div class="map-management-figma-main" data-node-id="60:4071">
+                <section class="map-management-figma-canvas">
+                  <div class="map-management-figma-map-image">
+                    <div class="map-management-live-map" id="map-management-live-map" aria-label="Interactive map management workspace"></div>
+                  </div>
+
+                  <div class="map-management-figma-tools">
+                    <div class="map-management-figma-toolset">
+                      <button class="map-management-figma-tool is-active">
+                        <img src="https://www.figma.com/api/mcp/asset/4bc14219-4c38-4b26-b7e0-25857117640b" alt="" />
+                      </button>
+                      <button class="map-management-figma-tool">
+                        <img src="https://www.figma.com/api/mcp/asset/5f6dc842-56c8-44b7-bf6c-cacd334e6955" alt="" />
+                      </button>
+                      <div class="map-management-figma-tool-divider"></div>
+                      <button class="map-management-figma-tool">
+                        <img src="https://www.figma.com/api/mcp/asset/bae73c44-7f30-462f-8b4b-60f468d41bb7" alt="" />
+                      </button>
+                      <button class="map-management-figma-tool">
+                        <img src="https://www.figma.com/api/mcp/asset/ae44dd17-3e80-4af0-ac9f-8df74c78ffca" alt="" />
+                      </button>
+                      <button class="map-management-figma-tool">
+                        <img src="https://www.figma.com/api/mcp/asset/a55839c8-d55b-4ed8-87f5-6f93a418a010" alt="" />
+                      </button>
+                    </div>
+
+                    <div class="map-management-figma-navset">
+                      <button class="map-management-figma-tool" type="button" data-map-target="management" data-map-action="zoom-in">
+                        <img src="https://www.figma.com/api/mcp/asset/246a97ca-10a7-44f4-8545-4d4030b686ff" alt="" />
+                      </button>
+                      <button class="map-management-figma-tool" type="button" data-map-target="management" data-map-action="zoom-out">
+                        <img src="https://www.figma.com/api/mcp/asset/4362d2a9-74ee-4dbe-8a72-00a616c49459" alt="" />
+                      </button>
+                      <button class="map-management-figma-tool" type="button" data-map-target="management" data-map-action="reset">
+                        <img src="https://www.figma.com/api/mcp/asset/7dd8b591-f399-43ab-b9de-67275ddf4b5f" alt="" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="map-management-figma-layers">
+                    <div class="map-management-figma-layer-card">
+                      <div class="map-management-figma-layer-item">
+                        <span class="layer-dot layer-dot-ranch"></span>
+                        <span>Ranch Boundary</span>
+                      </div>
+                      <div class="map-management-figma-layer-item">
+                        <span class="layer-dot layer-dot-dashed"></span>
+                        <span>Zone Boundary</span>
+                      </div>
+                      <div class="map-management-figma-layer-item">
+                        <span class="layer-dot layer-dot-selected"></span>
+                        <span>Selected Zone</span>
+                      </div>
+                    </div>
+                    <div class="map-management-figma-layer-button">
+                      <button class="map-management-figma-tool map-management-figma-tool-small">
+                        <img src="https://www.figma.com/api/mcp/asset/dea90c18-fb8e-4114-9cd9-6aa70f96d6f9" alt="" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="map-management-figma-status">
+                    <div class="map-management-figma-status-item">
+                      <span>LAT:</span>
+                      <strong id="map-management-lat">64.1272&deg; N</strong>
+                    </div>
+                    <div class="map-management-figma-status-item">
+                      <span>LON:</span>
+                      <strong id="map-management-lng">21.8165&deg; W</strong>
+                    </div>
+                    <div class="map-management-figma-status-item">
+                      <span>ELEV:</span>
+                      <strong id="map-management-elev">142m ASL</strong>
+                    </div>
+                  </div>
+                  <div class="map-management-figma-overlay" id="map-management-overlay" hidden>
+                    <article class="map-management-figma-properties map-management-figma-properties-pop" data-node-id="60:4123">
+                      <div class="map-management-figma-properties-body">
+                        <div class="map-management-figma-properties-head">
+                          <div>
+                            <div class="map-management-figma-properties-eyebrow">Properties</div>
+                            <h2 id="map-management-area-title">Zone 3</h2>
+                          </div>
+                          <div class="map-management-figma-properties-actions">
+                            <span class="map-management-figma-badge">Zone Selected</span>
+                            <button class="map-management-figma-close" aria-label="Close zone details" data-close-management-overlay>
+                              <img src="https://www.figma.com/api/mcp/asset/8f5792da-6bf7-44e8-b7d7-f180b8236ed1" alt="" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="map-management-figma-form">
+                          <label class="map-management-figma-field">
+                            <span>Zone Name</span>
+                            <div class="map-management-figma-input" id="map-management-area-name">Zone 3</div>
+                          </label>
+
+                          <label class="map-management-figma-field">
+                            <span>Area Definition Status</span>
+                            <div class="map-management-figma-input map-management-figma-select">
+                              <strong id="map-management-area-species">Internal areas not loaded</strong>
+                              <img src="https://www.figma.com/api/mcp/asset/10414551-dc0b-4198-89fc-d89ec6650980" alt="" />
+                            </div>
+                          </label>
+
+                          <label class="map-management-figma-field">
+                            <span>Boundary Coordinates (WGS84)</span>
+                            <div class="map-management-figma-coordinates">
+                              <div class="map-management-figma-coordinate-row">
+                                <code id="map-management-coord-1">P1: 64.1265&deg; N, 21.8174&deg; W</code>
+                                <img src="https://www.figma.com/api/mcp/asset/a2435de9-2d1b-449f-92a3-17e671afbd7f" alt="" />
+                              </div>
+                              <div class="map-management-figma-coordinate-row">
+                                <code id="map-management-coord-2">P2: 64.1280&deg; N, 21.8150&deg; W</code>
+                                <img src="https://www.figma.com/api/mcp/asset/f910b807-5d76-47b8-89a5-31771fd3bbf4" alt="" />
+                              </div>
+                              <div class="map-management-figma-coordinate-row">
+                                <code id="map-management-coord-3">P3: 64.1242&deg; N, 21.8132&deg; W</code>
+                                <img src="https://www.figma.com/api/mcp/asset/a5627679-4188-45e0-a397-daa00fae0fc9" alt="" />
+                              </div>
+                            </div>
+                          </label>
+
+                          <label class="map-management-figma-field">
+                            <span>Additional Info</span>
+                            <div class="map-management-figma-textarea" id="map-management-notes">Zone boundaries loaded from KML. Internal area polygons have not been provided yet.</div>
+                          </label>
+                        </div>
+                      </div>
+
+                      <footer class="map-management-figma-footer">
+                        <button class="map-management-figma-save">
+                          <img src="https://www.figma.com/api/mcp/asset/c6246ee8-f0e1-404d-afff-769973b813f1" alt="" />
+                          <span>Save Changes</span>
+                        </button>
+                        <button class="map-management-figma-discard">Discard Draft</button>
+                      </footer>
+                    </article>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-task-management">
+            <div class="page-content task-figma-page">
+              <section class="task-figma-canvas">
+                <header class="task-figma-header">
+                  <h1>Task Management</h1>
+                  <div class="task-figma-summary-cards">
+                    <article class="task-figma-summary-card">
+                      <strong>124</strong>
+                      <span>Active Tasks</span>
+                    </article>
+                    <article class="task-figma-summary-card is-accent">
+                      <strong>42</strong>
+                      <span>Due Today</span>
+                    </article>
+                  </div>
+                </header>
+
+                <section class="task-figma-bento">
+                  <article class="task-figma-distribution-card">
+                    <div class="task-figma-card-head">
+                      <h2>Distribution by Activity</h2>
+                      <div class="task-figma-live-sync">
+                        <span>Live Sync</span>
+                        <i></i>
+                      </div>
+                    </div>
+
+                    <div class="task-figma-distribution-grid">
+                      <div class="task-figma-distribution-item">
+                        <div class="task-figma-distribution-label">
+                          <img src="https://www.figma.com/api/mcp/asset/66d478fe-e352-4b8c-b451-90c1a91d4ff1" alt="" />
+                          <strong>Planting</strong>
+                        </div>
+                        <div class="task-figma-progress-track"><span class="is-planting"></span></div>
+                        <span class="task-figma-capacity">65% Capacity</span>
+                      </div>
+
+                      <div class="task-figma-distribution-item">
+                        <div class="task-figma-distribution-label">
+                          <img src="https://www.figma.com/api/mcp/asset/c87d3fe9-9d0e-447c-a803-6347ffad744e" alt="" />
+                          <strong class="is-blue">Monitoring</strong>
+                        </div>
+                        <div class="task-figma-progress-track"><span class="is-monitoring"></span></div>
+                        <span class="task-figma-capacity">22% Capacity</span>
+                      </div>
+
+                      <div class="task-figma-distribution-item">
+                        <div class="task-figma-distribution-label">
+                          <img src="https://www.figma.com/api/mcp/asset/ca7ba105-2ccb-49d1-b196-6edca6e37409" alt="" />
+                          <strong class="is-slate">Fertilizing</strong>
+                        </div>
+                        <div class="task-figma-progress-track"><span class="is-fertilizing"></span></div>
+                        <span class="task-figma-capacity">13% Capacity</span>
+                      </div>
+                    </div>
+                  </article>
+
+                  <button class="task-figma-map-card" data-view="map-viewer" data-title="Map Viewer" type="button">
+                    <img src="https://www.figma.com/api/mcp/asset/2a769e66-d8ed-4a6b-94f2-a48c24d99bce" alt="" />
+                    <div class="task-figma-map-gradient"></div>
+                    <div class="task-figma-map-copy">
+                      <span>Live Map</span>
+                      <strong>See Tasks on Map</strong>
+                      <em>Open in Map Viewer <img src="https://www.figma.com/api/mcp/asset/0fc321e5-89ac-4641-b846-975d4a3aafd6" alt="" /></em>
+                    </div>
+                  </button>
+                </section>
+
+                <section class="task-figma-log-card">
+                  <div class="task-figma-filter-bar">
+                    <div class="task-figma-filters">
+                      <button class="task-figma-filter" type="button">
+                        <img src="https://www.figma.com/api/mcp/asset/1600752a-9e9e-4211-8954-b6e0ce81cdb8" alt="" />
+                        <span>Filter Type</span>
+                      </button>
+                      <button class="task-figma-filter" type="button">
+                        <img src="https://www.figma.com/api/mcp/asset/d23e8fc5-1b81-4280-8c18-d82ce80c68df" alt="" />
+                        <span>Personnel</span>
+                      </button>
+                      <button class="task-figma-filter" type="button">
+                        <img src="https://www.figma.com/api/mcp/asset/7ab82726-dd2f-492b-98c0-8a1ba5f37c15" alt="" />
+                        <span>Sec<br />tor</span>
+                      </button>
+                    </div>
+
+                    <div class="task-figma-log-actions">
+                      <button class="task-figma-export" type="button">
+                        <img src="https://www.figma.com/api/mcp/asset/5a3c1639-e016-4c42-b6e1-fedd24404501" alt="" />
+                        <span>Export CSV</span>
+                      </button>
+                      <button class="task-figma-create" data-open-map-task type="button">
+                        <img src="https://www.figma.com/api/mcp/asset/ea59e974-4c1e-4f07-aa34-9d19091f7149" alt="" />
+                        <span>Create Task</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="task-figma-table-shell">
+                    <div class="task-figma-table-head">
+                      <div>Task ID</div>
+                      <div>Sector / Area</div>
+                      <div>Activity Type</div>
+                      <div>Assignee</div>
+                      <div>Status</div>
+                      <div>Last Sync</div>
+                      <div>Actions</div>
+                    </div>
+
+                    <article class="task-figma-row">
+                      <div class="task-figma-id">#TR-<br />2023<br />-<br />089</div>
+                      <div class="task-figma-sector">
+                        <strong>Sector<br />04-B<br />Ridge</strong>
+                        <span>Sub-zone:<br />Northern<br />Slope</span>
+                      </div>
+                      <div class="task-figma-activity">
+                        <span class="task-figma-activity-pill is-planting">
+                          <img src="https://www.figma.com/api/mcp/asset/66d478fe-e352-4b8c-b451-90c1a91d4ff1" alt="" />
+                          Planting
+                        </span>
+                      </div>
+                      <div class="task-figma-assignee">
+                        <img src="https://www.figma.com/api/mcp/asset/49cad8b8-83b7-476f-bd3a-1587cf89af74" alt="Erik Thorvaldsen" />
+                        <span>Erik<br />Thorvaldsen</span>
+                      </div>
+                      <div class="task-figma-status is-syncing"><i></i><span>Syncing</span></div>
+                      <div class="task-figma-last-sync">02m<br />14s<br />ago</div>
+                      <div class="task-figma-actions-cell"></div>
+                    </article>
+
+                    <article class="task-figma-row">
+                      <div class="task-figma-id">#TR-<br />2023<br />-<br />102</div>
+                      <div class="task-figma-sector">
+                        <strong>Sector<br />01-A<br />Basin</strong>
+                        <span>Sub-zone:<br />Lakebed</span>
+                      </div>
+                      <div class="task-figma-activity">
+                        <span class="task-figma-activity-pill is-monitoring">
+                          <img src="https://www.figma.com/api/mcp/asset/c87d3fe9-9d0e-447c-a803-6347ffad744e" alt="" />
+                          Monitoring
+                        </span>
+                      </div>
+                      <div class="task-figma-assignee">
+                        <img src="https://www.figma.com/api/mcp/asset/8e8de678-ff54-4b33-bb42-409275f1036e" alt="Anna Sigurðardóttir" />
+                        <span>Anna<br />Sigurðardóttir</span>
+                      </div>
+                      <div class="task-figma-status is-pending"><i></i><span>Pending</span></div>
+                      <div class="task-figma-last-sync">14m<br />45s<br />ago</div>
+                      <div class="task-figma-actions-cell"></div>
+                    </article>
+
+                    <article class="task-figma-row">
+                      <div class="task-figma-id">#TR-<br />2023<br />-<br />094</div>
+                      <div class="task-figma-sector">
+                        <strong>Sector<br />07-C<br />Plat<br />eau</strong>
+                        <span>Sub-zone:<br />East Rim</span>
+                      </div>
+                      <div class="task-figma-activity">
+                        <span class="task-figma-activity-pill is-fertilizing">
+                          <img src="https://www.figma.com/api/mcp/asset/ca7ba105-2ccb-49d1-b196-6edca6e37409" alt="" />
+                          Fertilizing
+                        </span>
+                      </div>
+                      <div class="task-figma-assignee">
+                        <img src="https://www.figma.com/api/mcp/asset/d40cd444-b9db-47b4-a4dc-e53f2bc38ae2" alt="Björn Helgason" />
+                        <span>Björn<br />Helgason</span>
+                      </div>
+                      <div class="task-figma-status is-complete"><img src="https://www.figma.com/api/mcp/asset/58fc35fc-4492-49c5-a320-cad08fbe748c" alt="" /><span>Complete</span></div>
+                      <div class="task-figma-last-sync">1h<br />22m<br />ago</div>
+                      <div class="task-figma-actions-cell"></div>
+                    </article>
+                  </div>
+
+                  <div class="task-figma-load-more">
+                    <button type="button">
+                      <span>Load More Activity</span>
+                      <img src="https://www.figma.com/api/mcp/asset/2f7c3c21-b897-459f-8e98-e9891e3235c7" alt="" />
+                    </button>
+                  </div>
+                </section>
+              </section>
+
+              <button class="task-figma-fab" data-open-map-task type="button" aria-label="Create Task">
+                <img src="https://www.figma.com/api/mcp/asset/cc6ed033-24cd-4eb4-8e23-49e32b0b5f93" alt="" />
+              </button>
+            </div>
+          </section>
+
+          <section class="view" id="view-users">
+            <div class="page-content users-figma-page" data-node-id="60:4285">
+              <header class="users-figma-heading">
+                <h1>User Management</h1>
+              </header>
+
+              <div class="users-figma-grid">
+                <section class="users-figma-onboard-card">
+                  <div class="users-figma-card-title">
+                    <img src="https://www.figma.com/api/mcp/asset/44377954-c0d1-408f-8c62-d11405624bf7" alt="" />
+                    <h2>Onboard New Personnel</h2>
+                  </div>
+
+                  <div class="users-figma-form-grid">
+                    <label class="users-figma-field">
+                      <span>First Name</span>
+                      <div class="users-figma-input">e.g. Aris</div>
+                    </label>
+                    <label class="users-figma-field">
+                      <span>Last Name</span>
+                      <div class="users-figma-input">e.g. Magn&uacute;sson</div>
+                    </label>
+                  </div>
+
+                  <div class="users-figma-role-block">
+                    <div class="users-figma-label">Role Designation</div>
+                    <div class="users-figma-role-grid">
+                      <button class="users-figma-role-card is-active" type="button">
+                        <span class="users-figma-role-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M7.25 10.5V8.75C7.25 6.12665 9.37665 4 12 4C14.6234 4 16.75 6.12665 16.75 8.75V10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5.75 10.5H18.25L17.35 14.7C17.03 16.19 15.71 17.25 14.18 17.25H9.82C8.29 17.25 6.97 16.19 6.65 14.7L5.75 10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path d="M10.1 13.25H13.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          </svg>
+                        </span>
+                        <strong>Tree Planter</strong>
+                      </button>
+                      <button class="users-figma-role-card" type="button">
+                        <span class="users-figma-role-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M14.5 9.75A3.25 3.25 0 1 1 8 9.75A3.25 3.25 0 0 1 14.5 9.75Z" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M4.75 18.25C5.52 15.69 7.74 14.25 10.75 14.25C12.09 14.25 13.22 14.54 14.14 15.12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M16.25 12.25L19.5 15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M16.25 15.5H19.5V18.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </span>
+                        <strong>Owner</strong>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="users-figma-preview-card">
+                    <div class="users-figma-preview-head">
+                      <span>Auto-Generation Preview</span>
+                      <img src="https://www.figma.com/api/mcp/asset/83d05e67-40aa-4a97-ae99-6dfa4a5c1fb6" alt="" />
+                    </div>
+                    <div class="users-figma-preview-grid">
+                      <div>
+                        <small>Generated Username</small>
+                        <strong>aris.magnusson</strong>
+                      </div>
+                      <div>
+                        <small>Temporary Password</small>
+                        <strong>TC-9281-RANCH</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="users-figma-primary-wrap">
+                    <button class="users-figma-primary" type="button" aria-label="Add User">
+                      <span class="users-figma-primary-label">Add User</span>
+                      <span class="users-figma-primary-icon" aria-hidden="true">
+                        <svg viewBox="0 0 16 16" fill="none">
+                          <path d="M3 8H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                          <path d="M8 3L13 8L8 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </span>
+                    </button>
+                  </div>
+                </section>
+
+                <aside class="users-figma-permissions-card">
+                  <div class="users-figma-card-title">
+                    <img src="https://www.figma.com/api/mcp/asset/cc579a63-7862-436b-ba93-3b455c0481d1" alt="" />
+                    <h2>Permissions Panel</h2>
+                  </div>
+
+                  <div class="users-figma-permission-group">
+                    <div class="users-figma-permission-eyebrow">Data Sovereignty</div>
+                    <div class="users-figma-permission-row">
+                      <span>Can Create Zones</span>
+                      <span class="users-figma-check is-checked"></span>
+                    </div>
+                    <div class="users-figma-permission-row">
+                      <span>Can Edit Terrain Data</span>
+                      <span class="users-figma-check is-checked"></span>
+                    </div>
+                    <div class="users-figma-permission-row">
+                      <span>Can Delete Tasks</span>
+                      <span class="users-figma-check"></span>
+                    </div>
+                  </div>
+
+                  <div class="users-figma-permission-group">
+                    <div class="users-figma-permission-eyebrow">Field Access</div>
+                    <div class="users-figma-permission-row">
+                      <span>Mobile App Access</span>
+                      <span class="users-figma-check is-checked"></span>
+                    </div>
+                    <div class="users-figma-permission-row">
+                      <span>Offline Registry Sync</span>
+                      <span class="users-figma-check"></span>
+                    </div>
+                  </div>
+
+                  <div class="users-figma-note">
+                    <img src="https://www.figma.com/api/mcp/asset/db6ae373-41cd-4694-ad4f-c83697e99640" alt="" />
+                    <p>Permissions are dynamically scaled based on Role Designation. Adjusting these overrides standard protocols.</p>
+                  </div>
+                </aside>
+              </div>
+
+              <section class="users-figma-registry-shell">
+                <div class="users-figma-registry-head">
+                  <div>
+                    <h2>Active Personnel Registry</h2>
+                    <p>Live roster of all active reforestation agents and administrators.</p>
+                  </div>
+                  <div class="users-figma-search">
+                    <img src="https://www.figma.com/api/mcp/asset/0ab29043-d536-43e0-b588-e1dea880a2b2" alt="" />
+                    <span>Filter agents...</span>
+                  </div>
+                </div>
+
+                <div class="users-figma-table-card">
+                  <table class="users-figma-table">
+                    <thead>
+                      <tr>
+                        <th>Full Name</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Mobile Access</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <div class="users-figma-person-cell">
+                            <img src="https://www.figma.com/api/mcp/asset/9fe17c62-f5f5-49a8-a325-8716634a4c73" alt="Bj&ouml;rn Sigur&eth;sson" />
+                            <strong>Bj&ouml;rn Sigur&eth;sson</strong>
+                          </div>
+                        </td>
+                        <td><code>bjorn.sig</code></td>
+                        <td><span class="users-figma-role-tag users-figma-role-tag-owner">Owner</span></td>
+                        <td>
+                          <span class="users-figma-access users-figma-access-enabled">
+                            <img src="https://www.figma.com/api/mcp/asset/aeb2a103-050e-4e0d-bb05-0b118aae158d" alt="" />
+                            Enabled
+                          </span>
+                        </td>
+                        <td><button class="users-figma-action">View Credentials</button></td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="users-figma-person-cell">
+                            <img src="https://www.figma.com/api/mcp/asset/6ce14621-75c9-4da9-8b93-323d0f110e0b" alt="Helga J&oacute;nsd&oacute;ttir" />
+                            <strong>Helga J&oacute;nsd&oacute;ttir</strong>
+                          </div>
+                        </td>
+                        <td><code>helga.jons</code></td>
+                        <td><span class="users-figma-role-tag">Tree Planter</span></td>
+                        <td>
+                          <span class="users-figma-access users-figma-access-enabled">
+                            <img src="https://www.figma.com/api/mcp/asset/aeb2a103-050e-4e0d-bb05-0b118aae158d" alt="" />
+                            Enabled
+                          </span>
+                        </td>
+                        <td><button class="users-figma-action">View Credentials</button></td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <div class="users-figma-person-cell">
+                            <img src="https://www.figma.com/api/mcp/asset/1a19cc73-c243-474a-b8fc-84a5ff511cd9" alt="Einar &THORN;orsteinsson" />
+                            <strong>Einar &THORN;orsteinsson</strong>
+                          </div>
+                        </td>
+                        <td><code>einar.thor</code></td>
+                        <td><span class="users-figma-role-tag">Tree Planter</span></td>
+                        <td>
+                          <span class="users-figma-access users-figma-access-disabled">
+                            <img src="https://www.figma.com/api/mcp/asset/7200cf0e-3efc-4a08-b145-82bfba7f3c5a" alt="" />
+                            Disabled
+                          </span>
+                        </td>
+                        <td><button class="users-figma-action">View Credentials</button></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <footer class="users-figma-table-footer">
+                  <span>Showing 3 of 28 personnel</span>
+                  <div class="users-figma-pagination">
+                    <button aria-label="Previous page"><img src="https://www.figma.com/api/mcp/asset/9c30c948-a8d2-44ad-9a53-c07ba0378adf" alt="" /></button>
+                    <button aria-label="Next page"><img src="https://www.figma.com/api/mcp/asset/c04ec588-30be-455a-b305-f1544975fc18" alt="" /></button>
+                  </div>
+                </footer>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-species">
+            <div class="page-content species-figma-page" id="species-page">
+              <div class="species-figma-shell">
+                <div class="species-figma-main">
+                  <header class="species-figma-header">
+                    <div class="species-figma-title-wrap">
+                      <h1 class="species-figma-title">
+                        <span class="species-figma-title-default">Species Inventory</span>
+                        <span class="species-figma-title-open">Species<br />Inventory</span>
+                      </h1>
+                    </div>
+
+                    <div class="species-figma-actions">
+                      <button class="species-figma-action species-figma-action-muted" type="button">
+                        <img src="https://www.figma.com/api/mcp/asset/2ac7ae88-4524-4a15-bccd-e31a1e4651bf" alt="" />
+                        <span class="species-figma-action-default">Update Odoo Stock</span>
+                        <span class="species-figma-action-open">Update<br />Odoo<br />Stock</span>
+                      </button>
+                      <button class="species-figma-action species-figma-action-primary" type="button">
+                        <img src="https://www.figma.com/api/mcp/asset/23b63697-58c5-4c93-a0c7-edf6438fb7f5" alt="" />
+                        <span class="species-figma-action-default">Add New Species</span>
+                        <span class="species-figma-action-open">Add<br />New<br />Species</span>
+                      </button>
+                    </div>
+                  </header>
+
+                  <section class="species-figma-table-card">
+                    <div class="species-figma-table-head">
+                      <div class="species-figma-col species-figma-col-species">Species</div>
+                      <div class="species-figma-col species-figma-col-inventory">Inventory</div>
+                      <div class="species-figma-col species-figma-col-planted">
+                        <span class="species-figma-col-default">Total Planted</span>
+                        <span class="species-figma-col-open">Total<br />Planted</span>
+                      </div>
+                      <div class="species-figma-col species-figma-col-growth">
+                        <span class="species-figma-col-default">Growth Phase</span>
+                        <span class="species-figma-col-open">Growth<br />Phase</span>
+                      </div>
+                      <div class="species-figma-col species-figma-col-area">Area Type</div>
+                    </div>
+
+                    <div class="species-figma-table-body">
+                      <button class="species-figma-row species-figma-row-clickable species-figma-row-selected species-figma-row-downy" data-open-species-detail aria-expanded="false" type="button">
+                        <div class="species-figma-cell species-figma-cell-species">
+                          <div class="species-figma-thumb species-figma-thumb-downy">
+                            <img src="https://www.figma.com/api/mcp/asset/de8d798b-7644-4f0d-afb3-9a3c673b1378" alt="" />
+                          </div>
+                          <div class="species-figma-species-copy">
+                            <strong>
+                              <span class="species-figma-name-default">Downy Birch</span>
+                              <span class="species-figma-name-open">Downy<br />Birch</span>
+                            </strong>
+                            <span>
+                              <span class="species-figma-latin-default">Betula pubescens</span>
+                              <span class="species-figma-latin-open">Betula<br />pubescens</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="species-figma-cell species-figma-cell-mono"><strong>12,450</strong><span>units</span></div>
+                        <div class="species-figma-cell">45,200</div>
+                        <div class="species-figma-cell"><span class="species-figma-tag species-figma-tag-green">Sapling</span></div>
+                        <div class="species-figma-cell species-figma-cell-area">Basalt Slopes</div>
+                      </button>
+
+                      <div class="species-figma-row species-figma-row-rowan">
+                        <div class="species-figma-cell species-figma-cell-species">
+                          <div class="species-figma-thumb species-figma-thumb-rowan">
+                            <img src="https://www.figma.com/api/mcp/asset/1145ffa6-cc7e-4ec5-aa24-d5d6f8c43394" alt="" />
+                          </div>
+                          <div class="species-figma-species-copy">
+                            <strong>
+                              <span class="species-figma-name-default">European Rowan</span>
+                              <span class="species-figma-name-open">European<br />Rowan</span>
+                            </strong>
+                            <span>
+                              <span class="species-figma-latin-default">Sorbus aucuparia</span>
+                              <span class="species-figma-latin-open">Sorbus<br />aucuparia</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="species-figma-cell species-figma-cell-mono"><strong>8,200</strong><span>units</span></div>
+                        <div class="species-figma-cell">22,100</div>
+                        <div class="species-figma-cell"><span class="species-figma-tag species-figma-tag-blue">Juvenile</span></div>
+                        <div class="species-figma-cell species-figma-cell-area">Coastal Fringe</div>
+                      </div>
+
+                      <div class="species-figma-row species-figma-row-spruce">
+                        <div class="species-figma-cell species-figma-cell-species">
+                          <div class="species-figma-thumb species-figma-thumb-spruce">
+                            <img src="https://www.figma.com/api/mcp/asset/aece2f74-32d2-4a47-8869-5d4ac2c8d107" alt="" />
+                          </div>
+                          <div class="species-figma-species-copy">
+                            <strong>
+                              <span class="species-figma-name-default">Sitka Spruce</span>
+                              <span class="species-figma-name-open">Sitka<br />Spruce</span>
+                            </strong>
+                            <span>
+                              <span class="species-figma-latin-default">Picea sitchensis</span>
+                              <span class="species-figma-latin-open">Picea<br />sitchensis</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="species-figma-cell species-figma-cell-mono"><strong>5,120</strong><span>units</span></div>
+                        <div class="species-figma-cell">88,400</div>
+                        <div class="species-figma-cell"><span class="species-figma-tag species-figma-tag-slate">Dormant</span></div>
+                        <div class="species-figma-cell species-figma-cell-area">Lowland Plains</div>
+                      </div>
+
+                      <div class="species-figma-row species-figma-row-willow">
+                        <div class="species-figma-cell species-figma-cell-species">
+                          <div class="species-figma-thumb species-figma-thumb-willow">
+                            <img src="https://www.figma.com/api/mcp/asset/f5edd20c-c577-4f55-932d-6038a10f45f1" alt="" />
+                          </div>
+                          <div class="species-figma-species-copy">
+                            <strong>
+                              <span class="species-figma-name-default">Tea-leaf Willow</span>
+                              <span class="species-figma-name-open">Tea-<br />leaf<br />Willow</span>
+                            </strong>
+                            <span>
+                              <span class="species-figma-latin-default">Salix phylicifolia</span>
+                              <span class="species-figma-latin-open">Salix<br />phylicifolia</span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="species-figma-cell species-figma-cell-mono"><strong>3,400</strong><span>units</span></div>
+                        <div class="species-figma-cell">12,600</div>
+                        <div class="species-figma-cell"><span class="species-figma-tag species-figma-tag-green">Seedling</span></div>
+                        <div class="species-figma-cell species-figma-cell-area">Wetlands</div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="species-figma-sync-card">
+                    <img src="https://www.figma.com/api/mcp/asset/0951e9da-1228-4ec6-aaa5-192edb8f0839" alt="" />
+                    <div class="species-figma-sync-copy">
+                      <strong>Odoo Sync Status</strong>
+                      <p>Inventory levels are currently synced with the central ERP. Next automated refresh in 14 minutes.</p>
+                    </div>
+                  </section>
+                </div>
+
+                <aside class="species-figma-detail-panel" id="species-detail-panel" hidden>
+                  <article class="species-figma-detail-card">
+                    <div class="species-figma-detail-hero">
+                      <img src="https://www.figma.com/api/mcp/asset/35e3eb45-5591-4a73-8c69-ea3ae183d278" alt="" />
+                      <span>Native Species</span>
+                    </div>
+
+                    <div class="species-figma-detail-body">
+                      <div class="species-figma-detail-title">
+                        <h2>Downy Birch</h2>
+                        <p>Betula pubescens</p>
+                      </div>
+
+                      <div class="species-figma-detail-metrics">
+                        <div class="species-figma-detail-metric">
+                          <small>Odoo Stock</small>
+                          <strong>12,450</strong>
+                          <span><img src="https://www.figma.com/api/mcp/asset/40b786dd-1b64-4368-a9c3-0909b474079a" alt="" />Verified</span>
+                        </div>
+                        <div class="species-figma-detail-metric">
+                          <small>Survival Rate</small>
+                          <strong>88.5%</strong>
+                          <span><img src="https://www.figma.com/api/mcp/asset/7e2de5e0-30a0-419a-94ce-123ae9384592" alt="" />+2.4% MoM</span>
+                        </div>
+                      </div>
+
+                      <div class="species-figma-detail-health">
+                        <div class="species-figma-detail-health-head">
+                          <span>Stock Health Status</span>
+                          <em>Optimum</em>
+                        </div>
+                        <div class="species-figma-detail-health-bar"><span></span></div>
+                      </div>
+
+                      <div class="species-figma-detail-trend">
+                        <small>Growth Trends (12 Months)</small>
+                        <div class="species-figma-detail-bars">
+                          <span style="height: 38.39px"></span>
+                          <span style="height: 52.8px"></span>
+                          <span style="height: 48px"></span>
+                          <span style="height: 62.39px"></span>
+                          <span style="height: 57.59px"></span>
+                          <span style="height: 72px"></span>
+                          <span style="height: 67.19px"></span>
+                          <span style="height: 81.59px"></span>
+                          <span style="height: 91.19px"></span>
+                          <span style="height: 86.39px"></span>
+                          <span style="height: 88.31px"></span>
+                          <span style="height: 96px"></span>
+                        </div>
+                        <div class="species-figma-detail-trend-labels">
+                          <span>Oct '22</span>
+                          <span>Sep '23</span>
+                        </div>
+                      </div>
+
+                      <button class="species-figma-detail-button" type="button">
+                        <img src="https://www.figma.com/api/mcp/asset/fa36a97c-2905-4656-8c8f-66421c35a2a0" alt="" />
+                        <span>Edit Species Parameters</span>
+                      </button>
+                    </div>
+                  </article>
+                </aside>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-settings-general">
+            <div class="page-content settings-figma-page">
+              <header class="settings-figma-header">
+                <h1>General Settings</h1>
+                <nav class="settings-figma-tabs" aria-label="Settings sections">
+                  <button class="settings-figma-tab is-active settings-page-tab" data-view="settings-general" data-title="General Settings" type="button">General</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-odoo" data-title="Odoo Settings" type="button">Odoo</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-notifications" data-title="Notification Settings" type="button">Notifications</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-map" data-title="Map Settings" type="button">Map</button>
+                </nav>
+              </header>
+
+              <div class="settings-figma-stack">
+                <section class="settings-figma-section-row">
+                  <div class="settings-figma-copy-column">
+                    <h2>System Profile</h2>
+                    <p>Identity markers for the ranching operations within the Icelandic southern territory.</p>
+                  </div>
+                  <div class="settings-figma-content-column">
+                    <article class="settings-figma-surface settings-figma-soft-surface">
+                      <div class="settings-figma-field-grid settings-figma-field-grid-2">
+                        <label class="settings-figma-field">
+                          <span class="settings-figma-label">Display Mode</span>
+                          <div class="settings-figma-input"><strong>AUTO</strong></div>
+                        </label>
+                        <label class="settings-figma-field">
+                          <span class="settings-figma-label">Operational Location</span>
+                          <div class="settings-figma-input"><span class="settings-figma-input-leading">⌖</span><strong>Bakki</strong></div>
+                        </label>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="settings-figma-section-row">
+                  <div class="settings-figma-copy-column">
+                    <h2>Regional Settings</h2>
+                    <p>Localized standards for temporal data and physical measurements.</p>
+                  </div>
+                  <div class="settings-figma-content-column">
+                    <article class="settings-figma-surface settings-figma-soft-surface settings-figma-vertical-gap">
+                      <label class="settings-figma-field">
+                        <span class="settings-figma-label">Primary Timezone</span>
+                        <div class="settings-figma-input"><strong>Greenwich Mean Time (GMT+00:00)</strong><span class="settings-figma-input-trailing">⌄</span></div>
+                      </label>
+                      <div class="settings-figma-field">
+                        <span class="settings-figma-label">Measurement System</span>
+                        <div class="settings-figma-segmented">
+                          <button class="settings-figma-segment is-active" type="button">Metric</button>
+                          <button class="settings-figma-segment" type="button">Imperial</button>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <section class="settings-figma-section-row">
+                  <div class="settings-figma-copy-column">
+                    <h2>Data Thresholds</h2>
+                    <p>Critical triggers for system alerts and survival success forecasting.</p>
+                  </div>
+                  <div class="settings-figma-content-column">
+                    <article class="settings-figma-surface settings-figma-soft-surface">
+                      <div class="settings-figma-field-grid settings-figma-field-grid-2">
+                        <div class="settings-figma-threshold-card">
+                          <div class="settings-figma-threshold-head">
+                            <span class="settings-figma-label">Global Target Survival</span>
+                            <strong>94%</strong>
+                          </div>
+                          <div class="settings-figma-slider-track"><span></span></div>
+                          <p>Baseline expectation for new planting cycles.</p>
+                        </div>
+                        <div class="settings-figma-threshold-card">
+                          <span class="settings-figma-label">Critical Weather Wind Speed</span>
+                          <div class="settings-figma-input with-unit"><strong>45</strong><span>km/h</span></div>
+                          <p>System-wide alert threshold for gale-force conditions.</p>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                </section>
+
+                <div class="settings-figma-actions-row">
+                  <button class="settings-figma-ghost-action" type="button">Cancel</button>
+                  <button class="settings-figma-primary-action" type="button">Save Changes</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-settings-odoo">
+            <div class="page-content settings-figma-page">
+              <header class="settings-figma-header">
+                <h1>Odoo Settings</h1>
+                <nav class="settings-figma-tabs" aria-label="Settings sections">
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-general" data-title="General Settings" type="button">General</button>
+                  <button class="settings-figma-tab is-active settings-page-tab" data-view="settings-odoo" data-title="Odoo Settings" type="button">Odoo</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-notifications" data-title="Notification Settings" type="button">Notifications</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-map" data-title="Map Settings" type="button">Map</button>
+                </nav>
+              </header>
+
+              <div class="settings-figma-stack">
+                <div class="settings-figma-odoo-top-grid">
+                  <article class="settings-figma-surface settings-figma-odoo-connection">
+                    <div class="settings-figma-card-head-row">
+                      <div class="settings-figma-head-with-meta">
+                        <div class="settings-figma-head-row-inline">
+                          <h2>Database Connection</h2>
+                          <span class="settings-figma-status-pill is-active">Active</span>
+                        </div>
+                        <p>Authorized access to the main Iceland nursery cluster.</p>
+                      </div>
+                      <button class="settings-figma-primary-button small" type="button">Update Credentials</button>
+                    </div>
+                    <div class="settings-figma-vertical-gap">
+                      <label class="settings-figma-field"><span class="settings-figma-label">Instance URL</span><div class="settings-figma-input is-mono"><strong>tectonic-forestry.odoo.com</strong></div></label>
+                      <label class="settings-figma-field"><span class="settings-figma-label">Database Name</span><div class="settings-figma-input is-mono"><strong>forestry_prod_01</strong></div></label>
+                      <label class="settings-figma-field"><span class="settings-figma-label">API Key</span><div class="settings-figma-input is-mono"><strong>••••••••••••••••••••</strong><span class="settings-figma-input-trailing">◉</span></div></label>
+                    </div>
+                    <div class="settings-figma-note-row"><span class="settings-figma-icon-chip">i</span><span>Connected via Odoo Enterprise API v16. Last handshake successful 4 mins ago.</span></div>
+                  </article>
+
+                  <article class="settings-figma-surface settings-figma-odoo-sync-card">
+                    <div class="settings-figma-head-with-meta"><h2>Synchronization</h2></div>
+                    <div class="settings-figma-field">
+                      <span class="settings-figma-label">Auto-Sync Frequency</span>
+                      <div class="settings-figma-option-grid settings-figma-option-grid-2x2">
+                        <button class="settings-figma-option-chip" type="button">15 Mins</button>
+                        <button class="settings-figma-option-chip is-active" type="button">Hourly</button>
+                        <button class="settings-figma-option-chip" type="button">Daily</button>
+                        <button class="settings-figma-option-chip" type="button">Manual Only</button>
+                      </div>
+                    </div>
+                    <button class="settings-figma-accent-button" type="button">Sync Now</button>
+                    <p class="settings-figma-muted-footnote">Last successful sync: Today, 14:30 GMT</p>
+                  </article>
+                </div>
+
+                <section class="settings-figma-block">
+                  <div class="settings-figma-block-head">
+                    <div>
+                      <h2>Field Mapping</h2>
+                      <p>Defining data flow between Tectonic Ranch and Odoo models.</p>
+                    </div>
+                    <button class="settings-figma-inline-link" type="button">+ Add Custom Mapping</button>
+                  </div>
+                  <article class="settings-figma-surface settings-figma-table-card">
+                    <div class="settings-figma-table-head settings-figma-table-head-mapping">
+                      <div>Tectonic Ranch Attribute</div><div></div><div>Odoo Model / Field</div><div>Status</div><div></div>
+                    </div>
+                    <div class="settings-figma-table-row settings-figma-table-row-mapping">
+                      <div class="settings-figma-mapping-main"><span class="settings-figma-icon-badge">◎</span><div><strong>Tree Species</strong><span>Taxonomy Name</span></div></div>
+                      <div class="settings-figma-mapping-arrow">⇄</div><div class="settings-figma-mono-value">product.template / name</div><div><span class="settings-figma-status-pill is-active">Linked</span></div><button class="settings-figma-row-action" type="button">✎</button>
+                    </div>
+                    <div class="settings-figma-table-row settings-figma-table-row-mapping">
+                      <div class="settings-figma-mapping-main"><span class="settings-figma-icon-badge">◎</span><div><strong>Survival Rate</strong><span>Percentage Calculation</span></div></div>
+                      <div class="settings-figma-mapping-arrow">⇄</div><div class="settings-figma-mono-value">stock.valuation / x_survival_score</div><div><span class="settings-figma-status-pill is-active">Linked</span></div><button class="settings-figma-row-action" type="button">✎</button>
+                    </div>
+                    <div class="settings-figma-table-row settings-figma-table-row-mapping">
+                      <div class="settings-figma-mapping-main"><span class="settings-figma-icon-badge">◎</span><div><strong>Planter ID</strong><span>Unique Crew Reference</span></div></div>
+                      <div class="settings-figma-mapping-arrow">⇄</div><div class="settings-figma-mono-value">res.partner / ref</div><div><span class="settings-figma-status-pill is-pending">Pending</span></div><button class="settings-figma-row-action" type="button">✎</button>
+                    </div>
+                  </article>
+                </section>
+
+                <div class="settings-figma-odoo-bottom-grid">
+                  <section class="settings-figma-block">
+                    <div class="settings-figma-block-head compact"><div><h2>Sync History Log</h2></div></div>
+                    <div class="settings-figma-log-stack">
+                      <article class="settings-figma-surface settings-figma-log-item success"><div class="settings-figma-log-copy"><strong>124 records synced successfully</strong><span>Batch #8921 • Tree Inventory Data</span></div><em>14:30 GMT</em></article>
+                      <article class="settings-figma-surface settings-figma-log-item warning"><div class="settings-figma-log-copy"><strong>Connection timeout</strong><span>Gateway Error • Retrying in 5 mins</span></div><em>13:15 GMT</em></article>
+                      <article class="settings-figma-surface settings-figma-log-item neutral"><div class="settings-figma-log-copy"><strong>Planter metrics updated</strong><span>Refreshed 45 employee profiles</span></div><em>12:00 GMT</em></article>
+                    </div>
+                  </section>
+                  <article class="settings-figma-health-card">
+                    <span class="settings-figma-kicker">Integrations Health</span>
+                    <div class="settings-figma-health-metric"><div><span>Sync Success Rate</span><strong>98.2%</strong></div><div class="settings-figma-progress-track blue"><span></span></div></div>
+                    <div class="settings-figma-health-metric"><div><span>API Limit Consumption</span><strong>12,401 / 50,000</strong></div><div class="settings-figma-progress-track blue partial"><span></span></div></div>
+                    <div class="settings-figma-tip-panel"><span>PRO TIP</span><p>Scheduling syncs during UTC off-peak hours (02:00-05:00) reduces latency by up to 40%.</p></div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-settings-notifications">
+            <div class="page-content settings-figma-page">
+              <header class="settings-figma-header">
+                <h1>Notification Settings</h1>
+                <nav class="settings-figma-tabs" aria-label="Settings sections">
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-general" data-title="General Settings" type="button">General</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-odoo" data-title="Odoo Settings" type="button">Odoo</button>
+                  <button class="settings-figma-tab is-active settings-page-tab" data-view="settings-notifications" data-title="Notification Settings" type="button">Notifications</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-map" data-title="Map Settings" type="button">Map</button>
+                </nav>
+              </header>
+
+              <div class="settings-figma-notification-grid">
+                <article class="settings-figma-surface settings-figma-notification-card">
+                  <div class="settings-figma-section-title-row"><div class="settings-figma-section-icon">✉</div><h2>Email Notifications</h2></div>
+                  <div class="settings-figma-toggle-stack">
+                    <div class="settings-figma-toggle-row"><div><strong>Daily Summary</strong><p>A comprehensive report of planting progress and soil health.</p></div><button class="settings-figma-toggle is-on" type="button"><span></span></button></div>
+                    <div class="settings-figma-toggle-row"><div><strong>Critical Alerts</strong><p>Immediate notification for server downtime or Odoo sync errors.</p></div><button class="settings-figma-toggle is-on" type="button"><span></span></button></div>
+                    <div class="settings-figma-toggle-row"><div><strong>Task Completions</strong><p>Receive an email when a field team completes a designated sector.</p></div><button class="settings-figma-toggle" type="button"><span></span></button></div>
+                  </div>
+                </article>
+
+                <article class="settings-figma-push-card">
+                  <div class="settings-figma-section-title-row inverse"><div class="settings-figma-section-icon inverse">◫</div><h2>Push Notifications (Mobile)</h2></div>
+                  <div class="settings-figma-toggle-stack compact inverse">
+                    <div class="settings-figma-toggle-row compact dark"><div><strong>Proximity Alerts</strong></div><button class="settings-figma-toggle compact dark is-on" type="button"><span></span></button></div>
+                    <div class="settings-figma-toggle-row compact dark"><div><strong>Weather Warnings</strong></div><button class="settings-figma-toggle compact dark is-on" type="button"><span></span></button></div>
+                    <div class="settings-figma-toggle-row compact dark"><div><strong>Team Check-ins</strong></div><button class="settings-figma-toggle compact dark" type="button"><span></span></button></div>
+                  </div>
+                  <div class="settings-figma-push-foot">Real-time alerts via the Tectonic Field App.</div>
+                </article>
+
+                <article class="settings-figma-surface settings-figma-sms-card">
+                  <div class="settings-figma-section-title-row"><div class="settings-figma-section-icon">⌁</div><h2>SMS Alerts</h2></div>
+                  <div class="settings-figma-field-stack">
+                    <label class="settings-figma-field"><span class="settings-figma-label">Phone Number</span><div class="settings-figma-input"><span class="settings-figma-input-leading">☎</span><strong>+354 888 2390</strong></div></label>
+                    <div class="settings-figma-alert-row"><div class="settings-figma-alert-copy"><span class="settings-figma-icon-badge warning">!</span><strong>Emergency System Failures</strong></div><button class="settings-figma-toggle is-on" type="button"><span></span></button></div>
+                  </div>
+                </article>
+
+                <article class="settings-figma-surface settings-figma-quiet-card">
+                  <div class="settings-figma-quiet-glow"></div>
+                  <div class="settings-figma-section-title-row"><div class="settings-figma-section-icon">☾</div><h2>Quiet Hours</h2></div>
+                  <p class="settings-figma-support-copy">Suppress non-critical notifications during these hours. Emergency system failures will bypass this setting.</p>
+                  <div class="settings-figma-field-grid settings-figma-field-grid-2">
+                    <label class="settings-figma-field"><span class="settings-figma-label">Start Time</span><div class="settings-figma-input"><strong>10:00 PM</strong><span class="settings-figma-input-trailing">⌄</span></div></label>
+                    <label class="settings-figma-field"><span class="settings-figma-label">End Time</span><div class="settings-figma-input"><strong>06:00 AM</strong><span class="settings-figma-input-trailing">⌄</span></div></label>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-settings-map">
+            <div class="page-content settings-figma-page">
+              <header class="settings-figma-header">
+                <h1>Map Settings</h1>
+                <nav class="settings-figma-tabs" aria-label="Settings sections">
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-general" data-title="General Settings" type="button">General</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-odoo" data-title="Odoo Settings" type="button">Odoo</button>
+                  <button class="settings-figma-tab settings-page-tab" data-view="settings-notifications" data-title="Notification Settings" type="button">Notifications</button>
+                  <button class="settings-figma-tab is-active settings-page-tab" data-view="settings-map" data-title="Map Settings" type="button">Map</button>
+                </nav>
+              </header>
+
+              <div class="settings-figma-map-grid">
+                <div class="settings-figma-map-left">
+                  <section class="settings-figma-block">
+                    <div class="settings-figma-block-head compact with-icon"><div class="settings-figma-section-title-row compact"><div class="settings-figma-section-icon">◉</div><h2>Visual Fidelity</h2></div></div>
+                    <div class="settings-figma-panel-stack">
+                      <article class="settings-figma-surface settings-figma-toggle-panel"><div class="settings-figma-toggle-row"><div><strong>Enable Map Terrain Shadows</strong><p>Dynamic hillshading based on Icelandic solar angles.</p></div><button class="settings-figma-toggle is-on" type="button"><span></span></button></div></article>
+                      <article class="settings-figma-surface settings-figma-toggle-panel"><div class="settings-figma-toggle-row"><div><strong>Show Area Labels at High Zoom</strong><p>Micro-zone naming appears above 18x zoom.</p></div><button class="settings-figma-toggle" type="button"><span></span></button></div></article>
+                      <article class="settings-figma-surface settings-figma-toggle-panel"><div class="settings-figma-toggle-row"><div><strong>Display Real-time Task Highlights</strong><p>Pulsing indicators for active planting and fertilization crews.</p></div><button class="settings-figma-toggle is-on" type="button"><span></span></button></div></article>
+                    </div>
+                  </section>
+
+                  <section class="settings-figma-block">
+                    <div class="settings-figma-block-head compact with-icon"><div class="settings-figma-section-title-row compact"><div class="settings-figma-section-icon">≡</div><h2>Data Layers</h2></div></div>
+                    <div class="settings-figma-option-grid settings-figma-layers-grid">
+                      <button class="settings-figma-layer-chip is-checked" type="button"><span class="settings-figma-checkbox">✓</span><strong>Zones</strong></button>
+                      <button class="settings-figma-layer-chip is-checked" type="button"><span class="settings-figma-checkbox">✓</span><strong>Areas</strong></button>
+                      <button class="settings-figma-layer-chip" type="button"><span class="settings-figma-checkbox"></span><strong>Active Tasks</strong></button>
+                      <button class="settings-figma-layer-chip" type="button"><span class="settings-figma-checkbox"></span><strong>Soil Quality</strong></button>
+                    </div>
+                  </section>
+
+                  <section class="settings-figma-block">
+                    <div class="settings-figma-block-head compact with-icon"><div class="settings-figma-section-title-row compact"><div class="settings-figma-section-icon">⌖</div><h2>Coordinate System</h2></div></div>
+                    <article class="settings-figma-surface settings-figma-coordinate-card">
+                      <label class="settings-figma-field"><span class="settings-figma-label">Primary Grid Projection</span><div class="settings-figma-input"><strong>WGS84 (Decimal Degrees)</strong><span class="settings-figma-input-trailing">⌄</span></div></label>
+                      <p class="settings-figma-support-copy">Changes coordinate readouts in the map header and GPS export files. Recommends ISN2016 for local precision mapping.</p>
+                    </article>
+                  </section>
+                </div>
+
+                <div class="settings-figma-map-right">
+                  <article class="settings-figma-map-preview-card">
+                    <img alt="Map preview" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 220'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23b7c9d3'/%3E%3Cstop offset='100%25' stop-color='%238ea7a1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='320' height='220' rx='28' fill='url(%23g)'/%3E%3Cpath d='M0 165 C 52 120, 126 194, 188 154 S 280 116, 320 170 L320 220 L0 220 Z' fill='%23184133' fill-opacity='0.22'/%3E%3C/svg%3E" />
+                    <div class="settings-figma-map-preview-overlay"></div>
+                    <div class="settings-figma-map-preview-badge"><span>Live Preview</span><strong>Zoom Level: 14.5x</strong></div>
+                    <div class="settings-figma-map-preview-meta"><span>Lat 64.1265° N</span><span>Lon 21.8174° W</span></div>
+                    <div class="settings-figma-map-preview-controls"><button type="button">+</button><button type="button">-</button></div>
+                  </article>
+                  <article class="settings-figma-surface settings-figma-legend-card">
+                    <h2>Legend Configuration</h2>
+                    <div class="settings-figma-legend-row">
+                      <span class="settings-figma-legend-chip growth">Primary Growth</span>
+                      <span class="settings-figma-legend-chip hydration">Hydration Grid</span>
+                      <span class="settings-figma-legend-chip basalt">Basalt Shelf</span>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-support">
+            <div class="page-content support-figma-page">
+              <section class="support-figma-hero">
+                <img alt="Support landscape" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 220'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23476a52'/%3E%3Cstop offset='100%25' stop-color='%232d4f3a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='320' height='220' rx='28' fill='url(%23g)'/%3E%3Ccircle cx='252' cy='48' r='30' fill='%23c1ddb5' fill-opacity='0.18'/%3E%3Cpath d='M0 162 C 56 120, 120 188, 182 150 S 286 122, 320 168 L320 220 L0 220 Z' fill='%2318301f' fill-opacity='0.25'/%3E%3C/svg%3E" />
+                <div class="support-figma-hero-overlay"></div>
+                <div class="support-figma-hero-content">
+                  <span class="support-figma-badge"><i></i>TERMINAL SUPPORT</span>
+                  <h1>System Diagnostic</h1>
+                </div>
+              </section>
+
+              <div class="support-figma-status-bar">
+                <span class="support-figma-status-dot"></span>
+                <strong>ALL SYSTEMS OPERATIONAL</strong>
+                <span class="support-figma-status-divider"></span>
+                <span>Last updated: 2 mins ago</span>
+              </div>
+
+              <section class="support-figma-actions-grid">
+                <article class="support-figma-card support-figma-card-light">
+                  <div class="support-figma-icon-tile">⇩</div>
+                  <div class="support-figma-copy-block">
+                    <h2>Download Server Logs</h2>
+                    <p>Download the logs here and upload them to an AI of your choice. Most of the times it will tell you what is wrong.</p>
+                  </div>
+                  <button class="support-figma-primary" type="button">EXPORT .LOG BUNDLE</button>
+                </article>
+
+                <article class="support-figma-card support-figma-card-dark">
+                  <div class="support-figma-icon-tile dark">⌘</div>
+                  <div class="support-figma-copy-block compact"><h2>Contact Lorenz</h2></div>
+                  <div class="support-figma-button-stack">
+                    <button class="support-figma-secondary" type="button">MESSAGE LORENZ</button>
+                    <button class="support-figma-secondary" type="button">CALL LORENZ</button>
+                  </div>
+                </article>
+              </section>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

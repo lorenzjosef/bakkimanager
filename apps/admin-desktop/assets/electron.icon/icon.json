@@ -1,0 +1,36 @@
+{
+  "fill" : {
+    "solid" : "display-p3:0.20508,0.43262,0.25024,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "icon.png",
+          "name" : "icon",
+          "position" : {
+            "scale" : 1.1,
+            "translation-in-points" : [
+              0,
+              35.89188934343713
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

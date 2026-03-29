@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bakki Geometry Debug Viewer</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f1e8;
+        --paper: #fffdf7;
+        --ink: #1e241d;
+        --muted: #5c6657;
+        --line: #d4ccb7;
+        --ranch: #264653;
+        --zone: rgba(42, 157, 143, 0.18);
+        --zone-line: #2a9d8f;
+        --fail: #c44536;
+        --warn: #d98e04;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        background: linear-gradient(180deg, #efe8d6 0%, var(--bg) 100%);
+        color: var(--ink);
+      }
+
+      .page {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 32px;
+      }
+
+      .header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .header h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        line-height: 1.1;
+      }
+
+      .header p {
+        margin: 0;
+        max-width: 760px;
+        color: var(--muted);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(320px, 1fr) minmax(360px, 520px);
+        gap: 24px;
+      }
+
+      .panel {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: 0 18px 42px rgba(33, 38, 30, 0.08);
+      }
+
+      .map-panel {
+        padding: 16px;
+      }
+
+      .sidebar {
+        padding: 20px;
+      }
+
+      .sidebar h2,
+      .map-panel h2 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .meta-card {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fcfaf4;
+      }
+
+      .meta-card span {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+
+      .meta-card strong {
+        font-size: 18px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .legend-swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.14);
+      }
+
+      .legend-ranch { background: rgba(38, 70, 83, 0.15); }
+      .legend-zone { background: rgba(42, 157, 143, 0.18); }
+      .legend-fail { background: var(--fail); }
+      .legend-overlap { background: var(--warn); }
+
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, #fbf8ef 0%, #f2ecdc 100%);
+      }
+
+      .section + .section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+
+      .section h3 {
+        margin: 0 0 12px;
+        font-size: 16px;
+      }
+
+      .issue-list {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .issue-list li + li {
+        margin-top: 10px;
+      }
+
+      code {
+        font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 12px;
+      }
+
+      .empty {
+        color: var(--muted);
+        font-style: italic;
+      }
+
+      @media (max-width: 1080px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <div>
+          <h1>Bakki Geometry Debug Viewer</h1>
+          <p>
+            Visualizes the current ranch and zone topology failures from <code>geometry-seed.json</code>.
+            Red points mark vertices outside the ranch boundary. Orange lines mark strictly crossing
+            overlap segments between neighboring zones.
+          </p>
+        </div>
+      </header>
+
+      <div class="layout">
+        <section class="panel map-panel">
+          <h2>Topology Map</h2>
+          <div class="legend">
+            <span class="legend-item"><span class="legend-swatch legend-ranch"></span> Ranch boundary</span>
+            <span class="legend-item"><span class="legend-swatch legend-zone"></span> Zone boundary</span>
+            <span class="legend-item"><span class="legend-swatch legend-fail"></span> Containment-failure vertex</span>
+            <span class="legend-item"><span class="legend-swatch legend-overlap"></span> Overlap segment</span>
+          </div>
+          <svg id="debug-map" viewBox="0 0 1200 900" aria-label="Bakki geometry debug map"></svg>
+        </section>
+
+        <aside class="panel sidebar">
+          <div class="meta-grid">
+            <div class="meta-card">
+              <span>Generated</span>
+              <strong>2026-03-28T15:41:39.322058+00:00</strong>
+            </div>
+            <div class="meta-card">
+              <span>Valid</span>
+              <strong>Yes</strong>
+            </div>
+            <div class="meta-card">
+              <span>Containment Failures</span>
+              <strong>0</strong>
+            </div>
+            <div class="meta-card">
+              <span>Overlap Pairs</span>
+              <strong>0</strong>
+            </div>
+          </div>
+
+          <section class="section">
+            <h3>Containment Failures</h3>
+            <ul class="issue-list">
+              <li class="empty">None</li>
+            </ul>
+          </section>
+
+          <section class="section">
+            <h3>Overlap Pairs</h3>
+            <ul class="issue-list">
+              <li class="empty">None</li>
+            </ul>
+          </section>
+
+          <section class="section">
+            <h3>Commands</h3>
+            <ul class="issue-list">
+              <li><code>yarn seed:geometry:inspect</code></li>
+              <li><code>yarn seed:geometry:validate</code></li>
+              <li><code>yarn seed:geometry:debug</code></li>
+            </ul>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <script>
+      const geojson = {"type": "FeatureCollection", "features": [{"type": "Feature", "id": "ranch-boundary", "geometry": {"type": "Polygon", "coordinates": [[[-23.47836685766009, 65.83533972144038], [-23.47660048848451, 65.83851289545056], [-23.4766211366401, 65.84258692996497], [-23.47461604005233, 65.84603158297959], [-23.4783078251326, 65.84860276344713], [-23.48252266498568, 65.85037309601533], [-23.48775125374842, 65.85179378626799], [-23.49746795292235, 65.85613215178294], [-23.51794360865924, 65.85365202995804], [-23.51194858182263, 65.85152938061077], [-23.5054215506632, 65.84946938732074], [-23.50103640134715, 65.84716451176898], [-23.50010051358349, 65.8447621107219], [-23.50010457861172, 65.84209493266299], [-23.50455023005861, 65.83901533813675], [-23.48276501799054, 65.83397227032836], [-23.47836685766009, 65.83533972144038]]]}, "properties": {"featureRole": "ranch_boundary", "name": "Bakki Ranch", "sourceFeatureName": "Unbenanntes Polygon"}}, {"type": "Feature", "id": "zone-1", "geometry": {"type": "Polygon", "coordinates": [[[-23.50046023072747, 65.84184856510089], [-23.50455023005861, 65.83901533813675], [-23.48276501799054, 65.83397227032836], [-23.47836685766009, 65.83533972144038], [-23.47674179801856, 65.83825904152975], [-23.50046023072747, 65.84184856510089]]]}, "properties": {"featureRole": "zone_boundary", "zoneName": "Zone 1", "zoneCode": "ZONE-1", "sourceFeatureName": "Zone 1"}}, {"type": "Feature", "id": "zone-2", "geometry": {"type": "Polygon", "coordinates": [[[-23.500166025726948, 65.8449302787952], [-23.50010051358349, 65.8447621107219], [-23.50010425340946, 65.8423083069077], [-23.476602140336958, 65.83883881821171], [-23.4766211366401, 65.84258692996497], [-23.476180015390792, 65.84334475362819], [-23.500166025726948, 65.8449302787952]]]}, "properties": {"featureRole": "zone_boundary", "zoneName": "Zone 2", "zoneCode": "ZONE-2", "sourceFeatureName": "Zone 2"}}, {"type": "Feature", "id": "zone-3", "geometry": {"type": "Polygon", "coordinates": [[[-23.50098024808133, 65.84702036770615], [-23.500222178992765, 65.84507442285802], [-23.476059709595525, 65.84355143280906], [-23.47461604005233, 65.84603158297959], [-23.478086318027785, 65.84844849261908], [-23.50098024808133, 65.84702036770615]]]}, "properties": {"featureRole": "zone_boundary", "zoneName": "Zone 3", "zoneCode": "ZONE-3", "sourceFeatureName": "Zone 3"}}, {"type": "Feature", "id": "zone-4", "geometry": {"type": "Polygon", "coordinates": [[[-23.50515844170424, 65.84933109478763], [-23.50103640134715, 65.84716451176898], [-23.50129951030611, 65.84730280430209], [-23.478560715523784, 65.84870898340122], [-23.48252266498568, 65.85037309601533], [-23.487437538422657, 65.85170854485283], [-23.50515844170424, 65.84933109478763]]]}, "properties": {"featureRole": "zone_boundary", "zoneName": "Zone 4", "zoneCode": "ZONE-4", "sourceFeatureName": "Zone 4"}}, {"type": "Feature", "id": "zone-5", "geometry": {"type": "Polygon", "coordinates": [[[-23.51794360865924, 65.85365202995804], [-23.51194858182263, 65.85152938061077], [-23.505813172532765, 65.84959298691814], [-23.488334255698856, 65.85205408819888], [-23.48775125374842, 65.85179378626799], [-23.49746795292235, 65.85613215178294], [-23.51794360865924, 65.85365202995804]]]}, "properties": {"featureRole": "zone_boundary", "zoneName": "Zone 5", "zoneCode": "ZONE-5", "sourceFeatureName": "Zone 5"}}]};
+      const svg = document.getElementById('debug-map');
+      const width = 1200;
+      const height = 900;
+      const padding = 56;
+
+      const coordinates = [];
+
+      function collectCoords(geometry) {
+        if (!geometry) return;
+        if (geometry.type === 'Point') {
+          coordinates.push(geometry.coordinates);
+          return;
+        }
+        if (geometry.type === 'LineString' || geometry.type === 'MultiPoint') {
+          geometry.coordinates.forEach((coord) => coordinates.push(coord));
+          return;
+        }
+        if (geometry.type === 'Polygon' || geometry.type === 'MultiLineString') {
+          geometry.coordinates.flat().forEach((coord) => coordinates.push(coord));
+          return;
+        }
+        if (geometry.type === 'MultiPolygon') {
+          geometry.coordinates.flat(2).forEach((coord) => coordinates.push(coord));
+        }
+      }
+
+      geojson.features.forEach((feature) => collectCoords(feature.geometry));
+
+      const longitudes = coordinates.map((coord) => coord[0]);
+      const latitudes = coordinates.map((coord) => coord[1]);
+      const minLon = Math.min(...longitudes);
+      const maxLon = Math.max(...longitudes);
+      const minLat = Math.min(...latitudes);
+      const maxLat = Math.max(...latitudes);
+      const spanLon = Math.max(maxLon - minLon, 1e-9);
+      const spanLat = Math.max(maxLat - minLat, 1e-9);
+      const scale = Math.min((width - padding * 2) / spanLon, (height - padding * 2) / spanLat);
+
+      function project(coord) {
+        const x = padding + (coord[0] - minLon) * scale;
+        const y = height - padding - (coord[1] - minLat) * scale;
+        return [x, y];
+      }
+
+      function polygonPath(coords) {
+        return coords[0].map((coord, index) => {
+          const [x, y] = project(coord);
+          return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
+        }).join(' ') + ' Z';
+      }
+
+      function linePath(coords) {
+        return coords.map((coord, index) => {
+          const [x, y] = project(coord);
+          return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`;
+        }).join(' ');
+      }
+
+      function appendElement(name, attributes, text) {
+        const node = document.createElementNS('http://www.w3.org/2000/svg', name);
+        Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, String(value)));
+        if (text) {
+          node.textContent = text;
+        }
+        svg.appendChild(node);
+        return node;
+      }
+
+      for (const feature of geojson.features) {
+        const role = feature.properties?.featureRole;
+        if (feature.geometry?.type === 'Polygon' && role === 'ranch_boundary') {
+          appendElement('path', {
+            d: polygonPath(feature.geometry.coordinates),
+            fill: 'rgba(38, 70, 83, 0.10)',
+            stroke: '#264653',
+            'stroke-width': 3,
+          });
+        }
+      }
+
+      for (const feature of geojson.features) {
+        const role = feature.properties?.featureRole;
+        if (feature.geometry?.type === 'Polygon' && role === 'zone_boundary') {
+          appendElement('path', {
+            d: polygonPath(feature.geometry.coordinates),
+            fill: 'rgba(42, 157, 143, 0.18)',
+            stroke: '#2a9d8f',
+            'stroke-width': 2.5,
+          });
+          const coords = feature.geometry.coordinates[0];
+          const centroid = coords.slice(0, -1).reduce((acc, coord) => [acc[0] + coord[0], acc[1] + coord[1]], [0, 0]).map((value) => value / Math.max(coords.length - 1, 1));
+          const [x, y] = project(centroid);
+          appendElement('text', {
+            x,
+            y,
+            'text-anchor': 'middle',
+            'font-size': 18,
+            'font-weight': 700,
+            fill: '#1f4037',
+          }, feature.properties.zoneName);
+        }
+      }
+
+      for (const feature of geojson.features) {
+        const role = feature.properties?.featureRole;
+        if (feature.geometry?.type === 'LineString' && role === 'overlap_segment') {
+          appendElement('path', {
+            d: linePath(feature.geometry.coordinates),
+            fill: 'none',
+            stroke: '#d98e04',
+            'stroke-width': 5,
+            'stroke-linecap': 'round',
+            opacity: 0.9,
+          });
+        }
+      }
+
+      for (const feature of geojson.features) {
+        const role = feature.properties?.featureRole;
+        if (feature.geometry?.type === 'Point' && role === 'containment_failure_vertex') {
+          const [x, y] = project(feature.geometry.coordinates);
+          appendElement('circle', {
+            cx: x,
+            cy: y,
+            r: 7,
+            fill: '#c44536',
+            stroke: '#fff8ef',
+            'stroke-width': 2,
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

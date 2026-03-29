@@ -1,0 +1,84 @@
+<odoo>
+    <data noupdate="1">
+        <record id="module_category_bakki" model="ir.module.category">
+            <field name="name">Bakki</field>
+            <field name="sequence">35</field>
+        </record>
+
+        <record id="group_bakki_planter" model="res.groups">
+            <field name="name">Planter</field>
+            <field name="category_id" ref="module_category_bakki"/>
+        </record>
+
+        <record id="group_bakki_owner" model="res.groups">
+            <field name="name">Owner</field>
+            <field name="category_id" ref="module_category_bakki"/>
+        </record>
+
+        <record id="rule_bakki_user_profile_own" model="ir.rule">
+            <field name="name">Bakki user profile: own record</field>
+            <field name="model_id" ref="model_bakki_user_profile"/>
+            <field name="groups" eval="[(4, ref('group_bakki_planter'))]"/>
+            <field name="domain_force">[('user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_bakki_phase_participant_own" model="ir.rule">
+            <field name="name">Bakki phase participant: own profile</field>
+            <field name="model_id" ref="model_bakki_phase_participant"/>
+            <field name="groups" eval="[(4, ref('group_bakki_planter'))]"/>
+            <field name="domain_force">[('user_profile_id.user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_bakki_project_task_assigned" model="ir.rule">
+            <field name="name">Bakki task: assigned or created by me</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="groups" eval="[(4, ref('group_bakki_planter'))]"/>
+            <field name="domain_force">['|', ('user_ids', 'in', user.id), ('create_uid', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="rule_bakki_area_observation_own" model="ir.rule">
+            <field name="name">Bakki area observation: own records</field>
+            <field name="model_id" ref="model_bakki_area_observation"/>
+            <field name="groups" eval="[(4, ref('group_bakki_planter'))]"/>
+            <field name="domain_force">[('author_user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="rule_bakki_observation_photo_own" model="ir.rule">
+            <field name="name">Bakki observation photo: own records</field>
+            <field name="model_id" ref="model_bakki_observation_photo"/>
+            <field name="groups" eval="[(4, ref('group_bakki_planter'))]"/>
+            <field name="domain_force">[('observation_id.author_user_id', '=', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="rule_bakki_task_photo_assigned" model="ir.rule">
+            <field name="name">Bakki task photo: assigned tasks</field>
+            <field name="model_id" ref="model_bakki_task_photo"/>
+            <field name="groups" eval="[(4, ref('group_bakki_planter'))]"/>
+            <field name="domain_force">[('task_id.user_ids', 'in', user.id)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+    </data>
+</odoo>

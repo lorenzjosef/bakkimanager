@@ -1,0 +1,24 @@
+services:
+  bakki-postgis:
+    image: postgis/postgis:16-3.4
+    container_name: bakki-postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${BAKKI_CORE_DB_NAME:-bakki_core}
+      POSTGRES_USER: ${BAKKI_CORE_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${BAKKI_CORE_DB_PASSWORD:-postgres}
+    ports:
+      - "${BAKKI_CORE_DB_PORT:-5432}:5432"
+    volumes:
+      - bakki-postgis-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${BAKKI_CORE_DB_USER:-postgres} -d ${BAKKI_CORE_DB_NAME:-bakki_core}
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  bakki-postgis-data:

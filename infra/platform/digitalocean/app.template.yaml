@@ -1,0 +1,100 @@
+name: bakki-admin
+region: fra
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+services:
+  - name: api
+    image:
+      registry_type: DOCR
+      repository: __DOCR_API_REPOSITORY__
+      tag: __DOCR_API_TAG__
+    http_port: 4175
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    health_check:
+      http_path: /v1/health
+      initial_delay_seconds: 20
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
+      - key: BAKKI_API_ROUTE_PREFIX
+        scope: RUN_TIME
+        value: v1
+      - key: VITE_API_BASE_URL
+        scope: RUN_TIME
+        value: /api/v1
+      - key: ODOO_URL
+        scope: RUN_TIME
+        value: https://bakki.odoo.com
+      - key: ODOO_DB
+        scope: RUN_TIME
+        value: bakki
+      - key: ODOO_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: __ODOO_API_KEY__
+      - key: BAKKI_CORE_DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: __BAKKI_CORE_DATABASE_URL__
+      - key: BAKKI_CORE_DB_SSL
+        scope: RUN_TIME
+        value: "true"
+      - key: BAKKI_CORE_ALLOW_INVALID_GEOMETRY_SEED
+        scope: RUN_TIME
+        value: "false"
+      - key: MEDIA_PROVIDER
+        scope: RUN_TIME
+        value: __MEDIA_PROVIDER__
+      - key: LOCAL_MEDIA_ROOT
+        scope: RUN_TIME
+        value: __LOCAL_MEDIA_ROOT__
+      - key: SPACES_BUCKET
+        scope: RUN_TIME
+        type: SECRET
+        value: __SPACES_BUCKET__
+      - key: SPACES_ENDPOINT
+        scope: RUN_TIME
+        type: SECRET
+        value: __SPACES_ENDPOINT__
+      - key: SPACES_REGION
+        scope: RUN_TIME
+        type: SECRET
+        value: __SPACES_REGION__
+      - key: SPACES_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: __SPACES_KEY__
+      - key: SPACES_SECRET
+        scope: RUN_TIME
+        type: SECRET
+        value: __SPACES_SECRET__
+      - key: SPACES_CDN_BASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: __SPACES_CDN_BASE_URL__
+    routes:
+      - path: /api
+  - name: web
+    image:
+      registry_type: DOCR
+      repository: __DOCR_WEB_REPOSITORY__
+      tag: __DOCR_WEB_TAG__
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    health_check:
+      http_path: /healthz
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+    routes:
+      - path: /

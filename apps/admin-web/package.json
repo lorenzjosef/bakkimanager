@@ -1,0 +1,32 @@
+{
+  "name": "@bakki/admin-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "tsx --test $(find src -name '*.test.ts' -o -name '*.test.tsx' | sort)",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@bakki/domain": "0.0.0",
+    "@bakki/map": "0.0.0",
+    "@bakki/ui": "0.0.0",
+    "@tanstack/react-query": "^5.66.8",
+    "@tanstack/react-router": "^1.114.20",
+    "ol": "^10.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.21.0",
+    "vite": "^6.2.0"
+  }
+}

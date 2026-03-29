@@ -1,0 +1,17 @@
+node_modules
+.yarn
+.pnp.*
+dist
+.vite
+.DS_Store
+coverage
+.env
+.env.local
+infra/platform/digitalocean/app.generated.yaml
+API_Keys.txt
+migrate/
+backups/
+
+.codex/
+.turbo/
+**/.turbo/

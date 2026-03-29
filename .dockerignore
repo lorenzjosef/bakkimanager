@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.env.local
+.turbo
+node_modules
+coverage
+test-results
+backups
+apps/admin-web/dist
+apps/admin-desktop/dist
+infra/platform/digitalocean/app.generated.yaml

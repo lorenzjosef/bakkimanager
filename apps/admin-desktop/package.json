@@ -1,0 +1,13 @@
+{
+  "name": "@bakki/admin-desktop",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "electron dist/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "electron": "^35.2.0"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "@bakki/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "bakki-core:bootstrap": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/scripts/bootstrap-bakki-core.ts",
+    "bakki-core:verify": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/scripts/verify-bakki-core.ts",
+    "dev": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register --watch src/main.ts",
+    "doctor": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/scripts/doctor-runtime.ts",
+    "doctor:strict": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/scripts/doctor-runtime.ts --strict",
+    "import:areas": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local ./node_modules/tsx/dist/cli.mjs src/scripts/import-area-geometry.ts",
+    "media:probe-signing": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/scripts/probe-media.ts",
+    "media:probe-upload": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/scripts/probe-media.ts --upload",
+    "odoo:bootstrap": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/scripts/bootstrap-odoo-online.ts",
+    "odoo:sync": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/scripts/sync-odoo-mirrors.ts",
+    "start": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.env.local --import @swc-node/register/esm-register src/main.ts",
+    "test": "tsx --test $(find src -name '*.test.ts' -type f | sort)",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bakki/domain": "0.0.0",
+    "@nestjs/common": "^11.1.17",
+    "@nestjs/core": "^11.1.17",
+    "@nestjs/platform-express": "^11.1.17",
+    "@swc-node/register": "^1.11.1",
+    "@swc/core": "^1.15.21",
+    "@swc/helpers": "^0.5.20",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/pg": "^8.15.5",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "cookie-parser": "^1.4.7",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0"
+  }
+}
