@@ -60,6 +60,7 @@ Legacy prototype and Figma material are migration references only. The productio
 - Bakki stores its own user mirror/profile rows keyed to `odoo_user_id`, not Odoo custom models.
 - Bakki tasks are mirrored into a Bakki task table keyed to `odoo_task_id`.
 - `bakki.task_template` remains a dedicated Bakki model for instructions, YouTube guidance, checklist schema, and defaults.
+- Mobile app delivery is still a future workstream; current repository scope remains web and desktop admin, but mobile requirements should be gathered with a structured discovery questionnaire before implementation.
 - The frontend must never infer task state from raw Odoo stage names.
 - Odoo stage/state remains the external workflow source, and Bakki maps it to:
   - `pending`
@@ -87,6 +88,90 @@ Legacy prototype and Figma material are migration references only. The productio
 - Inventory uses a stored running total plus transaction log.
 - System-wide privileged and auth events are recorded in a dedicated `bakki_audit_log`.
 - Map history for MVP is a simple geometry audit trail, not a draft/publish workflow.
+
+### Mobile App Discovery Questionnaire (For Upcoming Field App Scope)
+
+Use these questions with stakeholders before implementation starts.
+
+#### 1) Users, roles, and access
+
+- Which user roles must use the mobile app on day one (planter, owner, supervisor)?
+- Should all owners have full mobile area-creation rights, or only selected owners?
+- Do planters need read-only map access, or can they also submit geometry edits?
+- Should mobile login use the same Bakki session model and role checks as web/desktop with no separate auth provider?
+
+#### 2) Task management details
+
+- What exact task fields must be visible in the mobile task list (due date, priority, zone, area, checklist, assignee)?
+- How should priorities be represented on mobile (labels, colors, sort buckets)?
+- What are the default task sort/group rules (due date first, then priority, then area)?
+- Are overdue tasks required to be highlighted differently from due-today tasks?
+- What task actions are required offline (view only, start, pause, complete, checklist updates, notes, photos)?
+- Should users be able to reassign tasks in mobile, or is assignment owner-only from admin?
+
+#### 3) Offline behavior and sync policy
+
+- Which screens must be fully offline-capable (task list, task detail, map, area boundaries)?
+- How many days of tasks and map data should be cached on-device?
+- What is the conflict-resolution rule when offline edits collide with newer server updates?
+- Should sync be automatic on reconnect, manual via a "Sync now" button, or both?
+- What status indicators are required for offline/online/sync-pending/sync-failed states?
+- Should users be prevented from task completion submission if required fields are missing while offline?
+
+#### 4) Offline map requirements
+
+- Which map layers are mandatory offline (ranch boundary, zones, areas, task-highlighted polygons, basemap tiles)?
+- What offline basemap style is preferred (terrain, satellite, hybrid), and what zoom levels are needed?
+- Should offline packs be downloaded by ranch, by zone, or by assigned task areas only?
+- What is the maximum acceptable offline map storage size per user/device?
+- Should map labels and legend behavior match current web/desktop map conventions exactly?
+
+#### 5) GPS capture and owner-led area creation
+
+- For owner area creation, should users capture point sequences, walk boundaries continuously, or both modes?
+- What GPS accuracy threshold is required before allowing a point to be saved?
+- How many GPS points are required at minimum to create an area polygon?
+- Are snapping, simplification, and self-intersection prevention required on-device before submission?
+- Should owners be allowed to edit/reorder/delete captured points before finalizing an area?
+- Must new areas be validated against parent zone boundaries on-device, server-side, or both?
+- Should area creation support draft/save-later workflows when users lose connection mid-capture?
+
+#### 6) Task instructions and media
+
+- Should task templates show embedded YouTube links, downloadable clips, or text-only fallback when offline?
+- If YouTube is unavailable offline, should we require pre-downloaded instruction media for critical tasks?
+- Are photo attachments required from mobile task completion, and what compression/size limits apply?
+- Are there compliance requirements for timestamp, GPS stamp, or user identity on uploaded photos?
+
+#### 7) UX parity and platform expectations
+
+- Which desktop UI patterns are mandatory to mirror on mobile (color system, typography, status chips, map overlay style)?
+- Should the mobile app be phone-first only, or also optimized for rugged tablets?
+- What minimum Android/iOS OS versions and device performance targets must be supported?
+- Which languages/locales are required at launch?
+- Are accessibility requirements defined (contrast, text scaling, screen reader labels, touch target sizes)?
+
+#### 8) Security, privacy, and audit
+
+- Are biometric unlock or device PIN re-auth requirements needed for field devices?
+- How long can a mobile session remain active offline before re-authentication is required?
+- Which mobile actions must be audit-logged in Bakki Core (task state changes, area creation, geometry edits, media upload)?
+- Are there data-retention rules for offline cached tasks/maps/media on lost or replaced devices?
+- Is remote wipe or forced logout required for revoked users?
+
+#### 9) Notifications and operational workflow
+
+- Are push notifications required for new/changed tasks and approaching due dates?
+- Should reminder timing be configurable per user or centrally managed by owners?
+- Do owners need a mobile dashboard for team progress, or only admin web/desktop surfaces?
+- What field failure cases are highest priority to handle clearly (sync conflicts, GPS drift, invalid geometry, failed uploads)?
+
+#### 10) Release, rollout, and success criteria
+
+- What is the pilot scope (team size, ranch zones, device types, rollout duration)?
+- What KPIs define launch success (task completion latency, overdue rate, sync reliability, map usage)?
+- Which workflows are mandatory for MVP vs phase 2 (owner area creation, offline media upload, advanced map editing)?
+- What training and support materials are required before pilot start?
 
 ### Geometry Decision
 
