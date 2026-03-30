@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { OwnerOnly } from '../../common/decorators';
 import { getRequestSessionToken } from '../auth/auth.service';
 import { MapService } from './map.service';
 import { CreateAreaDto } from './dto/create-area.dto';
@@ -54,6 +55,7 @@ export class MapController {
     return this.mapService.listMapAudit();
   }
 
+  @OwnerOnly()
   @Post('areas')
   createArea(
     @Body() body: CreateAreaDto,
@@ -65,6 +67,7 @@ export class MapController {
     );
   }
 
+  @OwnerOnly()
   @Patch('areas/:areaId/geometry')
   updateAreaGeometry(
     @Param('areaId') areaId: string,
@@ -78,6 +81,7 @@ export class MapController {
     );
   }
 
+  @OwnerOnly()
   @Patch('zones/:zoneId/geometry')
   updateZoneGeometry(
     @Param('zoneId') zoneId: string,
@@ -91,6 +95,7 @@ export class MapController {
     );
   }
 
+  @OwnerOnly()
   @Patch('areas/:areaId/details')
   updateAreaDetails(
     @Param('areaId') areaId: string,
@@ -104,6 +109,7 @@ export class MapController {
     );
   }
 
+  @OwnerOnly()
   @Patch('areas/:areaId/metrics')
   updateAreaMetrics(
     @Param('areaId') areaId: string,
@@ -117,6 +123,7 @@ export class MapController {
     );
   }
 
+  @OwnerOnly()
   @Delete('areas/:areaId')
   deleteArea(
     @Param('areaId') areaId: string,

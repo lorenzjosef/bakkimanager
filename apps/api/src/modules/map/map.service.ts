@@ -28,6 +28,7 @@ import { BakkiGeometryService } from '../../bakki-core/bakki-geometry.service';
 import { BakkiMapAuditService } from '../../bakki-core/bakki-map-audit.service';
 import { BakkiPhaseService } from '../../bakki-core/bakki-phase.service';
 import { BakkiSpeciesService } from '../../bakki-core/bakki-species.service';
+import { validateGeoJsonGeometry } from '../../common/validation';
 import { AuditService } from '../audit/audit.service';
 import { AuthService } from '../auth/auth.service';
 import {
@@ -395,6 +396,9 @@ export class MapService {
   }
 
   private assertEditablePolygonGeometry(kind: 'Area' | 'Zone', geometry: GeoJsonGeometry) {
+    // Full GeoJSON validation including coordinate bounds and structure
+    validateGeoJsonGeometry(geometry as { type: string; coordinates: unknown }, ['Polygon', 'MultiPolygon']);
+
     if (!isPolygonGeometry(geometry)) {
       throw new BadRequestException(`${kind} geometry must be a GeoJSON Polygon or MultiPolygon.`);
     }

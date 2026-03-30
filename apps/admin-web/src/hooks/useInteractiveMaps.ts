@@ -29,9 +29,15 @@ type DeferredMapRuntimeState = {
 };
 
 let mapModulePromise: Promise<typeof import('@bakki/map')> | null = null;
+let olCssLoaded = false;
 
 function loadMapModule() {
   if (!mapModulePromise) {
+    // Lazy load OpenLayers CSS only when map is actually used
+    if (!olCssLoaded) {
+      import('ol/ol.css');
+      olCssLoaded = true;
+    }
     mapModulePromise = import('@bakki/map');
   }
 
@@ -152,7 +158,7 @@ export function useInteractiveMaps(
         mode: 'viewer',
         onPointerCoordinate(lat, lng) {
           if (coordinateEl) {
-            coordinateEl.innerHTML = formatLatLng(lat, lng);
+            coordinateEl.textContent = formatLatLng(lat, lng);
           }
         },
         onSelectionChange(selection) {
@@ -240,10 +246,10 @@ export function useInteractiveMaps(
         },
         onPointerCoordinate(lat, lng) {
           if (latEl) {
-            latEl.innerHTML = formatHemisphere(lat, 'N', 'S');
+            latEl.textContent = formatHemisphere(lat, 'N', 'S');
           }
           if (lngEl) {
-            lngEl.innerHTML = formatHemisphere(lng, 'E', 'W');
+            lngEl.textContent = formatHemisphere(lng, 'E', 'W');
           }
         },
         onSelectionChange(selection) {

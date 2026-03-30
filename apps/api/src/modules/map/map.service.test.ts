@@ -38,7 +38,7 @@ function createMapService(options?: {
   speciesConfigured?: boolean;
   speciesList?: Array<{
     commonName: string;
-    id: string;
+    speciesRef: string;
   }>;
   updateAreaDetails?: (areaRef: string, areaName: string, assignedSpeciesRef?: string | null) => Promise<{
     areaName: string;
@@ -172,7 +172,7 @@ test('getViewerData includes the assigned sapling name in the area overlay', asy
       },
     ],
     speciesConfigured: true,
-    speciesList: [{ id: 'downy-birch', commonName: 'Downy Birch' }],
+    speciesList: [{ speciesRef: 'downy-birch', commonName: 'Downy Birch' }],
     zoneSummaries: [
       {
         id: 'zone-1',

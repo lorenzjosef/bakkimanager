@@ -2,12 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import 'ol/ol.css';
 import { localAssetUrls } from '@bakki/domain';
 import '@/prototype/prototype.styles.css';
 import { router } from '@/router';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000, // 30 seconds default
+      gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
+      refetchOnWindowFocus: false, // Don't refetch on window focus by default
+      retry: 1, // Only retry once
+    },
+  },
+});
 
 document.body.classList.add('contemporary-mode');
 

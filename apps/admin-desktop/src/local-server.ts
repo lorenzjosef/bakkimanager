@@ -41,8 +41,17 @@ export async function startLocalStaticServer(rootDir: string): Promise<LocalStat
         'Content-Type': CONTENT_TYPES[extension] ?? 'application/octet-stream',
       });
 
-      createReadStream(filePath).pipe(response);
-    } catch {
+      const stream = createReadStream(filePath);
+      stream.on('error', (error) => {
+        console.error('Stream error serving file:', error);
+        if (!response.headersSent) {
+          response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+        }
+        response.end('Internal server error');
+      });
+      stream.pipe(response);
+    } catch (error) {
+      console.error('Error serving static file:', error);
       response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       response.end('Not found');
     }

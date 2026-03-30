@@ -21,6 +21,7 @@ export interface RecordAuditEventInput {
 
 @Injectable()
 export class AuditService {
+  private static readonly MAX_IN_MEMORY_EVENTS = 500;
   private readonly logger = new Logger(AuditService.name);
   private readonly events: AuditEventRecord[] = [
     {
@@ -56,6 +57,11 @@ export class AuditService {
       timestamp: new Date().toISOString(),
       type: event.type,
     });
+
+    // Prevent unbounded memory growth by trimming old events
+    if (this.events.length > AuditService.MAX_IN_MEMORY_EVENTS) {
+      this.events.length = AuditService.MAX_IN_MEMORY_EVENTS;
+    }
 
     if (!this.bakkiAuditLog.isConfigured()) {
       return;

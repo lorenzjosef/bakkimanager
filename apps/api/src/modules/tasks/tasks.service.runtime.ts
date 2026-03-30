@@ -79,18 +79,28 @@ export async function refreshTaskMirrorsFromOdoo(deps: TaskRuntimeDeps, limit = 
     : [];
   const tasks = dedupeOdooTaskSummaries([...recentTasks, ...erroredTasks]);
 
+  // Process tasks in parallel batches for better performance
+  const BATCH_SIZE = 10;
   let synced = 0;
   let failed = 0;
 
-  for (const task of tasks) {
-    try {
-      await syncTaskMirrorFromOdooTask(deps, task);
-      synced += 1;
-    } catch (error) {
-      failed += 1;
-      const message = error instanceof Error ? error.message : 'Unknown task mirror refresh error';
-      await deps.bakkiTasks.markSyncFailureByOdooTaskId(task.id, message);
-      deps.logger.warn(`Task mirror refresh failed for Odoo task ${task.id}: ${message}`);
+  for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
+    const batch = tasks.slice(i, i + BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map((task) => syncTaskMirrorFromOdooTask(deps, task)),
+    );
+
+    for (let j = 0; j < results.length; j++) {
+      const result = results[j];
+      if (result.status === 'fulfilled') {
+        synced += 1;
+      } else {
+        failed += 1;
+        const task = batch[j];
+        const message = result.reason instanceof Error ? result.reason.message : 'Unknown task mirror refresh error';
+        await deps.bakkiTasks.markSyncFailureByOdooTaskId(task.id, message);
+        deps.logger.warn(`Task mirror refresh failed for Odoo task ${task.id}: ${message}`);
+      }
     }
   }
 

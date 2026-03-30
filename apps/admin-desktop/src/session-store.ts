@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import path from 'node:path';
 
 interface PersistedDesktopSession {
-  encryption: 'plaintext' | 'safe-storage';
+  encryption: 'safe-storage';
   token: string;
   updatedAt: string;
 }
@@ -11,10 +11,8 @@ interface PersistedDesktopSession {
 function parsePersistedDesktopSession(raw: string): PersistedDesktopSession | null {
   try {
     const parsed = JSON.parse(raw) as Partial<PersistedDesktopSession>;
-    if (
-      (parsed.encryption === 'plaintext' || parsed.encryption === 'safe-storage')
-      && typeof parsed.token === 'string'
-    ) {
+    // Security: Only accept safe-storage encrypted tokens
+    if (parsed.encryption === 'safe-storage' && typeof parsed.token === 'string') {
       return {
         encryption: parsed.encryption,
         token: parsed.token,
@@ -31,8 +29,11 @@ function parsePersistedDesktopSession(raw: string): PersistedDesktopSession | nu
 export class DesktopSessionStore {
   private readonly filePath = path.join(app.getPath('userData'), 'bakki-session.json');
   private cachedToken: string | null = null;
+  private readonly canPersist: boolean;
 
   constructor() {
+    // Security: Only persist if OS-level encryption is available
+    this.canPersist = safeStorage.isEncryptionAvailable();
     this.cachedToken = this.loadTokenFromDisk();
   }
 
@@ -42,7 +43,11 @@ export class DesktopSessionStore {
 
   setToken(token: string) {
     this.cachedToken = token;
-    this.persistTokenToDisk(token);
+    // Only persist to disk if secure storage is available
+    if (this.canPersist) {
+      this.persistTokenToDisk(token);
+    }
+    // If no secure storage, token stays in memory only - requires re-login after app restart
   }
 
   clearToken() {
@@ -58,36 +63,40 @@ export class DesktopSessionStore {
       return null;
     }
 
+    // Security: Only load if we can decrypt (safe storage available)
+    if (!safeStorage.isEncryptionAvailable()) {
+      // Remove any existing persisted session - it cannot be securely read
+      rmSync(this.filePath, { force: true });
+      return null;
+    }
+
     const persisted = parsePersistedDesktopSession(readFileSync(this.filePath, 'utf8'));
     if (!persisted) {
       return null;
     }
 
-    if (persisted.encryption === 'safe-storage') {
-      if (!safeStorage.isEncryptionAvailable()) {
-        return null;
-      }
-
+    try {
       return safeStorage.decryptString(Buffer.from(persisted.token, 'base64'));
+    } catch {
+      // Decryption failed (possibly different machine/user) - remove invalid session
+      rmSync(this.filePath, { force: true });
+      return null;
     }
-
-    return persisted.token;
   }
 
   private persistTokenToDisk(token: string) {
+    // Security: Never persist without encryption
+    if (!safeStorage.isEncryptionAvailable()) {
+      return;
+    }
+
     mkdirSync(path.dirname(this.filePath), { recursive: true });
 
-    const persisted: PersistedDesktopSession = safeStorage.isEncryptionAvailable()
-      ? {
-          encryption: 'safe-storage',
-          token: safeStorage.encryptString(token).toString('base64'),
-          updatedAt: new Date().toISOString(),
-        }
-      : {
-          encryption: 'plaintext',
-          token,
-          updatedAt: new Date().toISOString(),
-        };
+    const persisted: PersistedDesktopSession = {
+      encryption: 'safe-storage',
+      token: safeStorage.encryptString(token).toString('base64'),
+      updatedAt: new Date().toISOString(),
+    };
 
     writeFileSync(this.filePath, JSON.stringify(persisted, null, 2), 'utf8');
   }

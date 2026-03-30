@@ -53,18 +53,27 @@ export async function buildMapViewerData(deps: ViewerDataDeps) {
   const areas = [...areaCatalog.values()];
   const areasByZoneId = groupAreasByZone(areas);
   const areaRefs = areas.map((area) => area.areaRef);
-  const areaMetricsByAreaRef = deps.bakkiAreaMetrics.isConfigured()
-    ? await loadAreaMetricsByAreaRef(deps, areaRefs)
-    : new Map<string, BakkiAreaMetricsRecord>();
-  const latestObservationRefsByAreaRef = deps.bakkiAreaMetrics.isConfigured()
-    ? await loadLatestObservationRefsByAreaRef(deps, areaRefs)
-    : new Map<string, string>();
-  const contractsByAreaRef = deps.bakkiPhases.isConfigured()
-    ? await loadLatestContractsByAreaRef(deps, areaRefs)
-    : new Map<string, BakkiAreaContractRecord>();
-  const speciesByRef = deps.bakkiSpecies.isConfigured()
-    ? new Map((await deps.bakkiSpecies.listSpecies()).map((species) => [species.speciesRef, species] as const))
-    : new Map();
+
+  // Parallelize the secondary data fetches for better performance
+  const [areaMetricsByAreaRef, latestObservationRefsByAreaRef, contractsByAreaRef, speciesList] = await Promise.all([
+    deps.bakkiAreaMetrics.isConfigured()
+      ? loadAreaMetricsByAreaRef(deps, areaRefs)
+      : Promise.resolve(new Map<string, BakkiAreaMetricsRecord>()),
+    deps.bakkiAreaMetrics.isConfigured()
+      ? loadLatestObservationRefsByAreaRef(deps, areaRefs)
+      : Promise.resolve(new Map<string, string>()),
+    deps.bakkiPhases.isConfigured()
+      ? loadLatestContractsByAreaRef(deps, areaRefs)
+      : Promise.resolve(new Map<string, BakkiAreaContractRecord>()),
+    deps.bakkiSpecies.isConfigured()
+      ? deps.bakkiSpecies.listSpecies()
+      : Promise.resolve([]),
+  ]);
+
+  const speciesByRef = new Map(speciesList.map((species) => [species.speciesRef, species] as const));
+
+  // Pre-index zones for O(1) lookup instead of O(n) find() in loop
+  const zonesById = new Map(zones.map((zone) => [zone.id, zone]));
 
   return {
     zoneCountLabel: `${zones.length} Zones`,
@@ -76,7 +85,7 @@ export async function buildMapViewerData(deps: ViewerDataDeps) {
     defaultCoordinates: ranchCoordinates ?? 'Unavailable',
     areaOverlaysByAreaId: Object.fromEntries(
       areas.map((area) => {
-        const zone = zones.find((candidate) => candidate.id === area.zoneRef);
+        const zone = zonesById.get(area.zoneRef);
         return [
           area.areaRef,
           buildAreaViewerOverlay(

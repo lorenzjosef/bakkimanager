@@ -70,6 +70,7 @@ export function createBakkiMap({
   let activeCreationZoneGeometry: Geometry | null = null;
   let activeSketchFeature: Feature<Geometry> | null = null;
   let activeSketchGeometryKey: EventsKey | null = null;
+  let editableFeatureChangeKey: EventsKey | null = null;
   let isRestoringGeometry = false;
   let selectionMode: 'area' | 'zone' = 'area';
   const areaLayer = new VectorLayer({
@@ -269,7 +270,15 @@ export function createBakkiMap({
   };
 
   const attachEditableFeature = (feature: Feature<Geometry>) => {
-    feature.getGeometry()?.on('change', () => {
+    if (editableFeatureChangeKey) {
+      unlistenByKey(editableFeatureChangeKey);
+      editableFeatureChangeKey = null;
+    }
+    const geometry = feature.getGeometry();
+    if (!geometry) {
+      return;
+    }
+    editableFeatureChangeKey = geometry.on('change', () => {
       if (
         editingGeometryKind === 'new-area'
         && !isRestoringGeometry
@@ -297,6 +306,10 @@ export function createBakkiMap({
   const clearGeometryEdit = () => {
     drawInteraction.abortDrawing();
     clearSketchFeature();
+    if (editableFeatureChangeKey) {
+      unlistenByKey(editableFeatureChangeKey);
+      editableFeatureChangeKey = null;
+    }
     editingGeometryId = null;
     editingGeometryKind = null;
     editingGeometryOriginalJson = null;

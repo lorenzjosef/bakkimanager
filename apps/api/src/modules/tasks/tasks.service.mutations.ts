@@ -84,25 +84,29 @@ export async function createTask(
       { limit: 1, order: 'id asc' },
     );
 
-    const template = await resolveTaskTemplate({
-      bakkiTaskTemplates: deps.bakkiTaskTemplates,
-      input,
-    });
+    // Parallelize independent resolvers for better performance
+    const [template, resolvedArea, assigneeOdooUserId, pendingStageId] = await Promise.all([
+      resolveTaskTemplate({
+        bakkiTaskTemplates: deps.bakkiTaskTemplates,
+        input,
+      }),
+      resolveTaskAreaRef({
+        bakkiGeometry: deps.bakkiGeometry,
+        input,
+      }),
+      resolveTaskAssigneeOdooUserId({
+        bakkiUsers: deps.bakkiUsers,
+        input,
+      }),
+      resolveStageIdForWorkflowState({
+        workflowState: 'pending',
+        project: defaultProject?.id ? [defaultProject.id, ''] : false,
+        odoo: deps.odoo,
+      }),
+    ]);
+
     const taskName = buildTaskName(template.label, input.areaLabel);
     const description = buildTaskDescription(input);
-    const resolvedArea = await resolveTaskAreaRef({
-      bakkiGeometry: deps.bakkiGeometry,
-      input,
-    });
-    const assigneeOdooUserId = await resolveTaskAssigneeOdooUserId({
-      bakkiUsers: deps.bakkiUsers,
-      input,
-    });
-    const pendingStageId = await resolveStageIdForWorkflowState({
-      workflowState: 'pending',
-      project: defaultProject?.id ? [defaultProject.id, ''] : false,
-      odoo: deps.odoo,
-    });
     const geometrySnapshot = resolvedArea?.areaRef
       ? await deps.bakkiGeometry.getAreaGeometrySnapshotByRef(resolvedArea.areaRef)
       : null;

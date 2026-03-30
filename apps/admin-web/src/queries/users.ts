@@ -21,6 +21,7 @@ export function useUserManagementData(role: UserRoleDesignation) {
     queryKey: [...USERS_PAGE_QUERY_KEY, role],
     queryFn: () =>
       fetchApiJson<UserManagementData>(`/users/management?role=${encodeURIComponent(role)}`),
+    staleTime: 60_000, // User data refreshes every minute
     retry: false,
   });
 }

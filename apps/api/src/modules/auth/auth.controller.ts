@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AUTH_ROUTES } from '../../contracts';
+import { Public } from '../../common/decorators';
 import {
   applyDesktopSessionClearResponse,
   applyDesktopSessionResponse,
@@ -15,6 +17,8 @@ import { ResetUserPasswordDto } from './dto/reset-user-password.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
+  @Throttle({ login: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
   @Post(AUTH_ROUTES.login.replace('/auth/', ''))
   async login(
     @Body() body: LoginRequestDto,
@@ -28,6 +32,7 @@ export class AuthController {
     return payload;
   }
 
+  @Public()
   @Get(AUTH_ROUTES.session.replace('/auth/', ''))
   async getSession(@Req() request: Request) {
     return this.authService.getSession(getRequestSessionToken(request));

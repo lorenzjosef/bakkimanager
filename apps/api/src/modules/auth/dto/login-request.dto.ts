@@ -1,10 +1,11 @@
-import { IsString, MinLength } from 'class-validator';
+import { IsString, MaxLength } from 'class-validator';
 
 export class LoginRequestDto {
   @IsString()
+  @MaxLength(256)
   username!: string;
 
   @IsString()
-  @MinLength(4)
+  @MaxLength(256) // Prevent DoS via extremely long passwords
   password!: string;
 }

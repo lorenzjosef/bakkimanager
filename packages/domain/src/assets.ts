@@ -2,21 +2,43 @@ function svgDataUri(svg: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function validateHexColor(color: string): string {
+  // Validate that the input looks like a hex color or a simple CSS color
+  if (/^#[0-9a-fA-F]{3,8}$/.test(color) || /^[a-zA-Z]+$/.test(color) || color === 'transparent') {
+    return color;
+  }
+  return '#000000'; // fallback to black for invalid colors
+}
+
 function gradientBackground(start: string, end: string, accent: string, label?: string) {
+  const safeStart = validateHexColor(start);
+  const safeEnd = validateHexColor(end);
+  const safeAccent = validateHexColor(accent);
+  const safeLabel = label ? escapeXml(label) : undefined;
+
   return svgDataUri(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220">
       <defs>
         <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="${start}"/>
-          <stop offset="100%" stop-color="${end}"/>
+          <stop offset="0%" stop-color="${safeStart}"/>
+          <stop offset="100%" stop-color="${safeEnd}"/>
         </linearGradient>
       </defs>
       <rect width="320" height="220" rx="28" fill="url(#bg)"/>
-      <circle cx="250" cy="52" r="34" fill="${accent}" fill-opacity="0.18"/>
+      <circle cx="250" cy="52" r="34" fill="${safeAccent}" fill-opacity="0.18"/>
       <circle cx="78" cy="172" r="58" fill="#ffffff" fill-opacity="0.08"/>
       <path d="M0 170 C 58 134, 110 196, 176 162 S 278 132, 320 170 L320 220 L0 220 Z" fill="#17301f" fill-opacity="0.22"/>
-      ${label
-        ? `<text x="24" y="34" font-family="Inter, Arial, sans-serif" font-size="16" fill="#f8faf9" opacity="0.92">${label}</text>`
+      ${safeLabel
+        ? `<text x="24" y="34" font-family="Inter, Arial, sans-serif" font-size="16" fill="#f8faf9" opacity="0.92">${safeLabel}</text>`
         : ''}
     </svg>
   `);
@@ -116,18 +138,22 @@ function dashboardTerrainAsset() {
 }
 
 function avatarAsset(initials: string, start: string, end: string) {
+  const safeInitials = escapeXml(initials);
+  const safeStart = validateHexColor(start);
+  const safeEnd = validateHexColor(end);
+
   return svgDataUri(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
       <defs>
         <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="${start}"/>
-          <stop offset="100%" stop-color="${end}"/>
+          <stop offset="0%" stop-color="${safeStart}"/>
+          <stop offset="100%" stop-color="${safeEnd}"/>
         </linearGradient>
       </defs>
       <rect width="96" height="96" rx="24" fill="url(#g)"/>
       <circle cx="48" cy="36" r="18" fill="#ffffff" fill-opacity="0.18"/>
       <path d="M20 82c6-15 18-23 28-23s22 8 28 23" fill="#ffffff" fill-opacity="0.18"/>
-      <text x="48" y="56" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="24" font-weight="700" fill="#ffffff">${initials}</text>
+      <text x="48" y="56" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-size="24" font-weight="700" fill="#ffffff">${safeInitials}</text>
     </svg>
   `);
 }
@@ -148,9 +174,13 @@ function brandMarkAsset() {
 }
 
 function iconAsset(glyph: string, fg = '#154212', bg = 'transparent') {
+  const safeGlyph = escapeXml(glyph);
+  const safeFg = validateHexColor(fg);
+  const safeBg = validateHexColor(bg);
+
   return svgDataUri(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-      ${bg !== 'transparent' ? `<rect width="32" height="32" rx="8" fill="${bg}"/>` : ''}
+      ${safeBg !== 'transparent' ? `<rect width="32" height="32" rx="8" fill="${safeBg}"/>` : ''}
       <text
         x="16"
         y="16.9"
@@ -160,8 +190,8 @@ function iconAsset(glyph: string, fg = '#154212', bg = 'transparent') {
         font-size="24.5"
         font-weight="800"
         letter-spacing="-0.03em"
-        fill="${fg}"
-      >${glyph}</text>
+        fill="${safeFg}"
+      >${safeGlyph}</text>
     </svg>
   `);
 }

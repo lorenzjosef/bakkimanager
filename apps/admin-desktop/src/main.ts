@@ -9,6 +9,13 @@ let localStaticServer: LocalStaticServer | null = null;
 let desktopSessionStore: DesktopSessionStore | null = null;
 let desktopSessionTransportConfigured = false;
 
+// Allowed URL protocols for external links
+const ALLOWED_EXTERNAL_PROTOCOLS = ['https:'];
+// Allow http only in development
+if (process.env.NODE_ENV === 'development') {
+  ALLOWED_EXTERNAL_PROTOCOLS.push('http:');
+}
+
 function getDesktopPaths() {
   const distDir = __dirname;
   return {
@@ -29,9 +36,31 @@ function resolveMacDockIcon() {
   return nativeImage.createFromPath(appIconPath);
 }
 
+function validateStartUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // In production, only allow https or localhost http
+    if (process.env.NODE_ENV === 'production') {
+      if (parsed.protocol === 'https:') return true;
+      if (parsed.protocol === 'http:' && (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')) {
+        return true;
+      }
+      return false;
+    }
+    // In development, allow http and https
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 async function resolveRendererUrl() {
   const configuredStartUrl = process.env.BAKKI_DESKTOP_START_URL?.trim();
   if (configuredStartUrl) {
+    if (!validateStartUrl(configuredStartUrl)) {
+      console.error(`Invalid BAKKI_DESKTOP_START_URL: ${configuredStartUrl}. Must be http(s) with valid host.`);
+      throw new Error('Invalid start URL configuration');
+    }
     return configuredStartUrl;
   }
 
@@ -107,6 +136,34 @@ function configureDesktopSessionTransport() {
   desktopSessionTransportConfigured = true;
 }
 
+function configureContentSecurityPolicy() {
+  const apiBaseUrl = resolveDesktopApiBaseUrl().replace(/\/+$/, '');
+  
+  // Build CSP directive - restrictive by default
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'", // Required for some CSS-in-JS patterns
+    "img-src 'self' data: blob:",
+    `connect-src 'self' ${apiBaseUrl}`,
+    "font-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    const responseHeaders = {
+      ...details.responseHeaders,
+      'Content-Security-Policy': [cspDirectives],
+      'X-Content-Type-Options': ['nosniff'],
+      'X-Frame-Options': ['DENY'],
+    };
+    callback({ responseHeaders });
+  });
+}
+
 async function createMainWindow() {
   const { appIconPath, preloadPath } = getDesktopPaths();
   const rendererUrl = await resolveRendererUrl();
@@ -125,6 +182,9 @@ async function createMainWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       preload: preloadPath,
+      // sandbox: false is required because the preload script needs to read
+      // environment variables for runtime configuration. The preload bridge
+      // is minimal (read-only config only) and contextIsolation is enabled.
       sandbox: false,
     },
   });
@@ -138,7 +198,15 @@ async function createMainWindow() {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    void shell.openExternal(url);
+    try {
+      const parsedUrl = new URL(url);
+      // Security: Only allow explicitly allowed protocols for external links
+      if (ALLOWED_EXTERNAL_PROTOCOLS.includes(parsedUrl.protocol)) {
+        void shell.openExternal(url);
+      }
+    } catch {
+      // Invalid URL, ignore
+    }
     return { action: 'deny' };
   });
 
@@ -153,22 +221,30 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   if (localStaticServer) {
-    void localStaticServer.close();
+    localStaticServer.close().catch((err) => {
+      console.error('Failed to close local server:', err);
+    });
     localStaticServer = null;
   }
 });
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    void createMainWindow();
+    createMainWindow().catch((err) => {
+      console.error('Failed to create main window:', err);
+    });
   }
 });
 
-void app.whenReady().then(async () => {
+app.whenReady().then(async () => {
   if (process.platform === 'darwin' && app.dock) {
     app.dock.setIcon(resolveMacDockIcon());
   }
 
+  configureContentSecurityPolicy();
   configureDesktopSessionTransport();
   await createMainWindow();
+}).catch((err) => {
+  console.error('Failed to initialize app:', err);
+  app.quit();
 });

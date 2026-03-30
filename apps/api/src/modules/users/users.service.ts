@@ -58,17 +58,22 @@ export class UsersService {
       );
 
       const avatarByUserId = new Map<number, string>();
+      
+      // Parallelize user sync operations
+      const mirrorResults = await Promise.allSettled(
+        odooUsers.map((user) => this.syncMirrorFromOdooUser(user)),
+      );
+      
       const mirrors: BakkiUserMirrorRecord[] = [];
-
-      for (const user of odooUsers) {
-        const mirror = await this.syncMirrorFromOdooUser(user);
-        if (!mirror) {
-          continue;
-        }
-
-        mirrors.push(mirror);
-        if (typeof user.avatar_128 === 'string' && user.avatar_128) {
-          avatarByUserId.set(user.id, `data:image/png;base64,${user.avatar_128}`);
+      for (let i = 0; i < odooUsers.length; i++) {
+        const result = mirrorResults[i];
+        const user = odooUsers[i];
+        
+        if (result.status === 'fulfilled' && result.value) {
+          mirrors.push(result.value);
+          if (typeof user.avatar_128 === 'string' && user.avatar_128) {
+            avatarByUserId.set(user.id, `data:image/png;base64,${user.avatar_128}`);
+          }
         }
       }
 
@@ -125,19 +130,26 @@ export class UsersService {
       { order: 'name asc' },
     );
 
+    const BATCH_SIZE = 10;
     let synced = 0;
     let failed = 0;
 
-    for (const user of odooUsers) {
-      try {
-        const mirror = await this.syncMirrorFromOdooUser(user);
-        if (mirror) {
+    // Process users in batches to avoid overwhelming the database
+    for (let i = 0; i < odooUsers.length; i += BATCH_SIZE) {
+      const batch = odooUsers.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map((user) => this.syncMirrorFromOdooUser(user)),
+      );
+
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j];
+        if (result.status === 'fulfilled' && result.value) {
           synced += 1;
+        } else if (result.status === 'rejected') {
+          failed += 1;
+          const message = result.reason instanceof Error ? result.reason.message : 'Unknown user mirror refresh error';
+          this.logger.warn(`User mirror refresh failed for Odoo user ${batch[j].id}: ${message}`);
         }
-      } catch (error) {
-        failed += 1;
-        const message = error instanceof Error ? error.message : 'Unknown user mirror refresh error';
-        this.logger.warn(`User mirror refresh failed for Odoo user ${user.id}: ${message}`);
       }
     }
 

@@ -46,6 +46,7 @@ export function useSpeciesInventoryData() {
         syncCopy: syncResponse.copy,
       };
     },
+    staleTime: 60_000,
     retry: false,
   });
 }

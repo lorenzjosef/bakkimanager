@@ -41,6 +41,7 @@ export function useMapViewerData() {
   return useQuery({
     queryKey: MAP_VIEWER_DATA_QUERY_KEY,
     queryFn: () => fetchApiJson<MapViewerData>('/map/viewer'),
+    staleTime: 30_000, // Data stays fresh for 30 seconds
     retry: false,
   });
 }
@@ -49,6 +50,7 @@ export function useMapManagementData() {
   return useQuery({
     queryKey: MAP_MANAGEMENT_DATA_QUERY_KEY,
     queryFn: () => fetchApiJson<MapManagementFixture>('/map/management'),
+    staleTime: 30_000,
     retry: false,
   });
 }
@@ -57,6 +59,7 @@ export function useRanchGeometryData() {
   return useQuery({
     queryKey: MAP_RANCH_GEOMETRY_QUERY_KEY,
     queryFn: () => fetchApiJson<GeoJsonFeatureCollection<RanchGeometryProperties>>('/map/ranch/geometry'),
+    staleTime: 60_000, // Geometry changes less frequently
     retry: false,
   });
 }
@@ -65,6 +68,7 @@ export function useZoneGeometryData() {
   return useQuery({
     queryKey: MAP_ZONE_GEOMETRY_QUERY_KEY,
     queryFn: () => fetchApiJson<GeoJsonFeatureCollection<ZoneGeometryProperties>>('/map/zones/geometry'),
+    staleTime: 60_000,
     retry: false,
   });
 }
@@ -73,6 +77,7 @@ export function useAreaGeometryData() {
   return useQuery({
     queryKey: MAP_AREA_GEOMETRY_QUERY_KEY,
     queryFn: () => fetchApiJson<GeoJsonFeatureCollection<AreaGeometryProperties>>('/map/areas/geometry'),
+    staleTime: 60_000,
     retry: false,
   });
 }

@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { OwnerOnly } from '../../common/decorators';
 import { getRequestSessionToken } from '../auth/auth.service';
 import { AdjustSpeciesInventoryDto } from './dto/adjust-species-inventory.dto';
 import { CreateSpeciesDto } from './dto/create-species.dto';
@@ -22,6 +23,7 @@ export class SpeciesController {
     return this.speciesService.getSyncStatus();
   }
 
+  @OwnerOnly()
   @Post()
   createSpecies(@Body() body: CreateSpeciesDto, @Req() request: Request) {
     return this.speciesService.createSpecies(body, getRequestSessionToken(request));
@@ -32,6 +34,7 @@ export class SpeciesController {
     return this.speciesService.getDetail(id);
   }
 
+  @OwnerOnly()
   @Patch(':id')
   updateSpecies(
     @Param('id') id: string,
@@ -41,6 +44,7 @@ export class SpeciesController {
     return this.speciesService.updateSpecies(id, body, getRequestSessionToken(request));
   }
 
+  @OwnerOnly()
   @Post(':id/inventory-adjustments')
   adjustInventory(
     @Param('id') id: string,

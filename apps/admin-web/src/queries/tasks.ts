@@ -28,6 +28,7 @@ export function useTaskManagementData() {
   return useQuery({
     queryKey: TASK_MANAGEMENT_QUERY_KEY,
     queryFn: () => fetchApiJson<TaskManagementData>('/tasks/summary'),
+    staleTime: 30_000,
     retry: false,
   });
 }
@@ -36,6 +37,7 @@ export function useTaskTemplatesData() {
   return useQuery({
     queryKey: TASK_TEMPLATES_QUERY_KEY,
     queryFn: () => fetchApiJson<TaskTemplateSummary[]>('/tasks/templates'),
+    staleTime: 300_000, // Templates change rarely, cache for 5 minutes
     retry: false,
   });
 }

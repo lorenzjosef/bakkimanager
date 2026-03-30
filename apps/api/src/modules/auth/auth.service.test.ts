@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { RecordAuditEventInput } from '../audit/audit.service';
+import type { SessionStore, SessionEntry } from '../../common/session';
 import {
   AuthService,
   BAKKI_DESKTOP_CLIENT_HEADER,
@@ -17,6 +18,41 @@ interface AuthMirrorUpsertInput {
   mobileAccessEnabled?: boolean;
   odooUserId: number;
   role: 'owner' | 'planter';
+}
+
+function createMockSessionStore(): SessionStore {
+  const sessions = new Map<string, SessionEntry>();
+  return {
+    async set(token: string, entry: SessionEntry): Promise<void> {
+      sessions.set(token, entry);
+    },
+    async get(token: string): Promise<SessionEntry | null> {
+      return sessions.get(token) ?? null;
+    },
+    async delete(_token: string): Promise<void> {
+      sessions.delete(_token);
+    },
+    async refresh(token: string, newExpiresAt: number): Promise<SessionEntry | null> {
+      const entry = sessions.get(token);
+      if (entry) {
+        entry.expiresAt = newExpiresAt;
+        return entry;
+      }
+      return null;
+    },
+    async revokeByUserId(_userId: number): Promise<number> {
+      return 0;
+    },
+    async revokeByUsername(_username: string): Promise<number> {
+      return 0;
+    },
+    async pruneExpired(): Promise<number> {
+      return 0;
+    },
+    async isHealthy(): Promise<boolean> {
+      return true;
+    },
+  };
 }
 
 function createAuthService(options?: {
@@ -92,6 +128,7 @@ function createAuthService(options?: {
         throw new Error(`Unexpected Odoo model lookup in auth test: ${model}`);
       },
     } as never,
+    createMockSessionStore(),
   );
 
   return { auditEvents, service };

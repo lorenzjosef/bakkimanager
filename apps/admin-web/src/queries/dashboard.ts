@@ -7,6 +7,7 @@ export function useDashboardSummary() {
   return useQuery({
     queryKey: DASHBOARD_SUMMARY_QUERY_KEY,
     queryFn: () => fetchApiJson<DashboardSummary>('/dashboard/summary'),
+    staleTime: 60_000, // Dashboard refreshes every minute
     retry: false,
   });
 }

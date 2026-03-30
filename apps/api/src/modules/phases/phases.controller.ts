@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { OwnerOnly } from '../../common/decorators';
 import { getRequestSessionToken } from '../auth/auth.service';
 import { CreatePlantingPhaseDto } from './dto/create-phase.dto';
 import { PhasesService } from './phases.service';
@@ -18,6 +19,7 @@ export class PhasesController {
     return this.phasesService.getWizardData();
   }
 
+  @OwnerOnly()
   @Post()
   createPhase(@Body() body: CreatePlantingPhaseDto, @Req() request: Request) {
     const sessionToken = getRequestSessionToken(request);

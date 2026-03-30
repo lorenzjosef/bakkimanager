@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -17,16 +18,17 @@ import type {
 import { BakkiUserMirrorService } from '../../bakki-core/bakki-user-mirror.service';
 import { OdooService } from '../../odoo/odoo.service';
 import { AuditService } from '../audit/audit.service';
+import type { SessionEntry, SessionStore } from '../../common/session';
 import {
   AuthContext,
   loadOdooAuthContextByUserId,
-  SessionEntry,
 } from './auth.service.identity';
 import {
   generateTemporaryPassword,
   parseTrailingNumericId,
 } from '../users/user-identity.helpers';
 
+export const SESSION_STORE_TOKEN = 'SESSION_STORE';
 export const BAKKI_SESSION_COOKIE = 'bakki_session';
 export const BAKKI_DESKTOP_CLIENT_HEADER = 'x-bakki-client';
 export const BAKKI_DESKTOP_CLIENT_VALUE = 'desktop';
@@ -95,16 +97,16 @@ export function applyDesktopSessionClearResponse(request: Pick<Request, 'headers
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly ownerGroupIdCache = new Map<string, number>();
-  private readonly sessions = new Map<string, SessionEntry>();
 
   constructor(
     private readonly auditService: AuditService,
     private readonly bakkiUsers: BakkiUserMirrorService,
     private readonly odoo: OdooService,
+    @Inject(SESSION_STORE_TOKEN) private readonly sessionStore: SessionStore,
   ) {}
 
   async login(username: string, password: string, sessionToken = this.createCookieToken()): Promise<LoginResponse> {
-    this.pruneExpiredSessions();
+    await this.sessionStore.pruneExpired();
 
     if (!this.hasLiveIdentityBackend()) {
       throw new ServiceUnavailableException('Bakki identity backend is currently unavailable.');
@@ -133,7 +135,6 @@ export class AuthService {
   }
 
   async getSession(sessionToken?: string): Promise<SessionStatusResponse> {
-    this.pruneExpiredSessions();
     const session = await this.resolveSession(sessionToken);
     return { session };
   }
@@ -152,11 +153,24 @@ export class AuthService {
     };
   }
 
+  /**
+   * Used by SessionAuthGuard to validate session and get both entry and session state.
+   */
+  async requireSessionWithEntry(sessionToken?: string) {
+    return this.requireSession(sessionToken);
+  }
+
   async refresh(sessionToken?: string): Promise<SessionRefreshResponse> {
-    this.pruneExpiredSessions();
-    const { entry } = await this.requireSession(sessionToken);
-    entry.issuedAt = Date.now();
-    entry.expiresAt = entry.issuedAt + SESSION_DURATION_MS;
+    if (!sessionToken) {
+      throw new UnauthorizedException('No active session');
+    }
+
+    const newExpiresAt = Date.now() + SESSION_DURATION_MS;
+    const entry = await this.sessionStore.refresh(sessionToken, newExpiresAt);
+
+    if (!entry) {
+      throw new UnauthorizedException('Session expired or not found');
+    }
 
     const refreshedSession = await this.buildSessionFromEntry(entry);
     await this.auditService.recordEvent({
@@ -171,17 +185,16 @@ export class AuthService {
   }
 
   async logout(sessionToken?: string) {
-    this.pruneExpiredSessions();
     if (!sessionToken) {
       return { success: true as const };
     }
 
-    const existing = this.sessions.get(sessionToken);
+    const existing = await this.sessionStore.get(sessionToken);
     if (!existing) {
       return { success: true as const };
     }
 
-    this.sessions.delete(sessionToken);
+    await this.sessionStore.delete(sessionToken);
     await this.auditService.recordEvent({
       actor: existing.profileId ? `user-profile-${existing.profileId}` : existing.username,
       message: 'User logged out',
@@ -198,7 +211,6 @@ export class AuthService {
     reason: string,
     sessionToken?: string,
   ): Promise<ResetUserPasswordResponse> {
-    this.pruneExpiredSessions();
     const { entry, session } = await this.requireSession(sessionToken);
     if (!session.user.canResetCredentials || session.user.role !== 'owner') {
       throw new UnauthorizedException('Only Bakki owners can reset user passwords');
@@ -251,7 +263,7 @@ export class AuthService {
   createSessionCookie() {
     return {
       httpOnly: true,
-      sameSite: 'lax' as const,
+      sameSite: 'strict' as const,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
     };
@@ -261,30 +273,12 @@ export class AuthService {
     return randomUUID();
   }
 
-  revokeSessionsForUserId(userId: number) {
-    this.pruneExpiredSessions();
-    for (const [token, entry] of this.sessions.entries()) {
-      if (entry.userId === userId) {
-        this.sessions.delete(token);
-      }
-    }
+  async revokeSessionsForUserId(userId: number) {
+    return this.sessionStore.revokeByUserId(userId);
   }
 
-  revokeSessionsForUsername(username: string) {
-    this.pruneExpiredSessions();
-    for (const [token, entry] of this.sessions.entries()) {
-      if (entry.username === username) {
-        this.sessions.delete(token);
-      }
-    }
-  }
-
-  private pruneExpiredSessions(now = Date.now()) {
-    for (const [token, entry] of this.sessions.entries()) {
-      if (entry.expiresAt <= now) {
-        this.sessions.delete(token);
-      }
-    }
+  async revokeSessionsForUsername(username: string) {
+    return this.sessionStore.revokeByUsername(username);
   }
 
   private hasLiveIdentityBackend() {
@@ -295,14 +289,14 @@ export class AuthService {
     const now = Date.now();
     const entry: SessionEntry = {
       token: sessionToken,
-      userId: context.userId,
+      userId: context.userId ?? null,
       profileId: context.profileId,
       username: context.generatedUsername,
       issuedAt: now,
       expiresAt: now + SESSION_DURATION_MS,
     };
 
-    this.sessions.set(entry.token, entry);
+    await this.sessionStore.set(entry.token, entry);
     return this.buildSessionFromContext(entry, context);
   }
 
@@ -311,20 +305,15 @@ export class AuthService {
       return null;
     }
 
-    const entry = this.sessions.get(sessionToken);
+    const entry = await this.sessionStore.get(sessionToken);
     if (!entry) {
-      return null;
-    }
-
-    if (entry.expiresAt <= Date.now()) {
-      this.sessions.delete(sessionToken);
       return null;
     }
 
     try {
       return await this.buildSessionFromEntry(entry);
     } catch {
-      this.sessions.delete(sessionToken);
+      await this.sessionStore.delete(sessionToken);
       return null;
     }
   }
@@ -334,14 +323,9 @@ export class AuthService {
       throw new UnauthorizedException('No active session');
     }
 
-    const entry = this.sessions.get(sessionToken);
+    const entry = await this.sessionStore.get(sessionToken);
     if (!entry) {
       throw new UnauthorizedException('No active session');
-    }
-
-    if (entry.expiresAt <= Date.now()) {
-      this.sessions.delete(sessionToken);
-      throw new UnauthorizedException('Session expired');
     }
 
     const session = await this.buildSessionFromEntry(entry);
