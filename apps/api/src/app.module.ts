@@ -9,6 +9,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
 import { MapModule } from './modules/map/map.module';
 import { MediaModule } from './modules/media/media.module';
+import { MobileModule } from './modules/mobile/mobile.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
 import { PhasesModule } from './modules/phases/phases.module';
 import { SpeciesModule } from './modules/species/species.module';
@@ -41,6 +42,7 @@ import { SessionAuthGuard, RolesGuard } from './common/guards';
     UsersModule,
     SpeciesModule,
     MapModule,
+    MobileModule,
     PhasesModule,
     TasksModule,
     MediaModule,

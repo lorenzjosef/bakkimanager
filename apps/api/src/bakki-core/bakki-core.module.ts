@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { BakkiAreaDraftService } from './bakki-area-draft.service';
 import { BakkiAreaMetricsService } from './bakki-area-metrics.service';
 import { BakkiAuditLogService } from './bakki-audit-log.service';
 import { BakkiCoreService } from './bakki-core.service';
@@ -13,7 +14,7 @@ import { BakkiUserMirrorService } from './bakki-user-mirror.service';
 
 @Global()
 @Module({
-  providers: [BakkiCoreService, BakkiUserMirrorService, BakkiTaskTemplateService, BakkiTaskMirrorService, BakkiPhaseService, BakkiAuditLogService, BakkiAreaMetricsService, BakkiGeometryService, BakkiMapAuditService, BakkiMediaAssetService, BakkiSpeciesService],
-  exports: [BakkiCoreService, BakkiUserMirrorService, BakkiTaskTemplateService, BakkiTaskMirrorService, BakkiPhaseService, BakkiAuditLogService, BakkiAreaMetricsService, BakkiGeometryService, BakkiMapAuditService, BakkiMediaAssetService, BakkiSpeciesService],
+  providers: [BakkiCoreService, BakkiUserMirrorService, BakkiTaskTemplateService, BakkiTaskMirrorService, BakkiPhaseService, BakkiAuditLogService, BakkiAreaMetricsService, BakkiAreaDraftService, BakkiGeometryService, BakkiMapAuditService, BakkiMediaAssetService, BakkiSpeciesService],
+  exports: [BakkiCoreService, BakkiUserMirrorService, BakkiTaskTemplateService, BakkiTaskMirrorService, BakkiPhaseService, BakkiAuditLogService, BakkiAreaMetricsService, BakkiAreaDraftService, BakkiGeometryService, BakkiMapAuditService, BakkiMediaAssetService, BakkiSpeciesService],
 })
 export class BakkiCoreModule {}

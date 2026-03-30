@@ -3,13 +3,16 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation';
 import { useAuthStore } from './src/store';
+import { useOfflineStore } from '@bakki/mobile-offline';
 
 export default function App() {
-  const initialize = useAuthStore((state) => state.initialize);
+  const initializeAuth = useAuthStore((state) => state.initialize);
+  const initializeOffline = useOfflineStore((state) => state.initialize);
 
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    initializeAuth();
+    initializeOffline();
+  }, [initializeAuth, initializeOffline]);
 
   return (
     <SafeAreaProvider>

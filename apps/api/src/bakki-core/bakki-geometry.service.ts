@@ -154,6 +154,11 @@ export class BakkiGeometryService {
     return listZoneSummaries(this.createReadContext());
   }
 
+  async getZoneByRef(zoneRef: string): Promise<ZoneSummary | null> {
+    const zones = await this.listZoneSummaries();
+    return zones.find((z) => z.id === zoneRef) ?? null;
+  }
+
   async listAreas() {
     return listAreas(this.createReadContext());
   }

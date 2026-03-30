@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
+import type { CaptureMethod, CapturedPoint } from '@bakki/mobile-offline';
 
 // Root stack params
 export type RootStackParamList = {
@@ -33,8 +34,15 @@ export type AreasStackParamList = {
   AreasList: undefined;
   AreaDetail: { areaId: string };
   CreateArea: undefined;
-  CaptureBoundary: { mode: 'walk' | 'points' };
-  ReviewDraft: { draftId: string };
+  CaptureBoundary: { mode: CaptureMethod; zoneId: string };
+  ReviewDraft: {
+    draftId: string | null;
+    capturedData?: {
+      points: CapturedPoint[];
+      zoneId: string;
+      captureMethod: CaptureMethod;
+    };
+  };
 };
 
 // Screen props types

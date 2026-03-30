@@ -42,6 +42,7 @@ export * from './auth';
 export * from './contracts';
 export * from './map';
 export * from './media';
+export * from './mobile';
 export * from './phases';
 export * from './settings';
 export * from './species';

@@ -77,3 +77,24 @@ export async function apiRequest<T>(
     status: response.status,
   };
 }
+
+/**
+ * Convenience client object for common HTTP methods.
+ */
+export const apiClient = {
+  get<T>(endpoint: string, headers?: Record<string, string>) {
+    return apiRequest<T>(endpoint, { method: 'GET', headers });
+  },
+  post<T>(endpoint: string, body?: unknown, headers?: Record<string, string>) {
+    return apiRequest<T>(endpoint, { method: 'POST', body, headers });
+  },
+  put<T>(endpoint: string, body?: unknown, headers?: Record<string, string>) {
+    return apiRequest<T>(endpoint, { method: 'PUT', body, headers });
+  },
+  patch<T>(endpoint: string, body?: unknown, headers?: Record<string, string>) {
+    return apiRequest<T>(endpoint, { method: 'PATCH', body, headers });
+  },
+  delete<T>(endpoint: string, headers?: Record<string, string>) {
+    return apiRequest<T>(endpoint, { method: 'DELETE', headers });
+  },
+};

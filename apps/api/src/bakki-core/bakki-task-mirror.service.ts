@@ -128,6 +128,48 @@ export class BakkiTaskMirrorService {
     return result.rows.map(mapBakkiTaskMirrorRow);
   }
 
+  /**
+   * List tasks for mobile bootstrap.
+   * Returns tasks with area/zone names joined.
+   */
+  async listTasksForMobile(userId: number) {
+    await this.ensureSchema();
+    const result = await this.bakkiCore.query<MobileTaskRow>(`
+      select
+        t.id,
+        t.odoo_task_id as task_ref,
+        t.title,
+        coalesce(tt.description, '') as description,
+        t.workflow_state,
+        t.priority,
+        t.due_at,
+        t.area_ref,
+        a.name as area_name,
+        a.zone_ref,
+        z.name as zone_name,
+        t.assignee_name as assignee_username,
+        u.id as assignee_user_id,
+        t.template_ref,
+        t.task_type,
+        t.last_synced_at as created_at,
+        t.last_synced_at as updated_at
+      from bakki_task t
+      left join bakki_area a on a.area_ref = t.area_ref
+      left join bakki_zone z on z.zone_ref = a.zone_ref
+      left join bakki_task_template tt on tt.template_ref = t.template_ref
+      left join bakki_user u on u.username = t.assignee_name
+      where t.workflow_state in ('pending', 'in_progress')
+      order by
+        case when t.due_at is null then 1 else 0 end asc,
+        t.due_at asc,
+        t.priority desc,
+        t.id desc
+      limit 500
+    `);
+
+    return result.rows.map(mapMobileTaskRow);
+  }
+
   async listErroredOdooTaskIds(limit = 100) {
     await this.ensureSchema();
     const result = await this.bakkiCore.query<{ odoo_task_id: number | string }>(`
@@ -444,4 +486,73 @@ export class BakkiTaskMirrorService {
 
     this.schemaEnsured = true;
   }
+}
+
+// Mobile task row type and mapper
+interface MobileTaskRow {
+  id: number | string;
+  task_ref: string;
+  title: string;
+  description: string | null;
+  workflow_state: string;
+  priority: string | null;
+  due_at: Date | string | null;
+  area_ref: string | null;
+  area_name: string | null;
+  zone_ref: string | null;
+  zone_name: string | null;
+  assignee_username: string | null;
+  assignee_user_id: number | string | null;
+  template_ref: string | null;
+  task_type: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+export interface MobileTaskRecord {
+  taskRef: string;
+  title: string;
+  description: string | null;
+  workflowState: string;
+  priority: string;
+  dueDate: string | null;
+  areaRef: string | null;
+  areaName: string | null;
+  zoneRef: string | null;
+  zoneName: string | null;
+  assigneeUsername: string | null;
+  assigneeUserId: number | null;
+  templateRef: string | null;
+  type: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function mapMobileTaskRow(row: MobileTaskRow): MobileTaskRecord {
+  return {
+    taskRef: String(row.task_ref),
+    title: row.title,
+    description: row.description,
+    workflowState: row.workflow_state,
+    priority: row.priority ?? '0',
+    dueDate: row.due_at instanceof Date
+      ? row.due_at.toISOString()
+      : row.due_at
+        ? new Date(row.due_at).toISOString()
+        : null,
+    areaRef: row.area_ref,
+    areaName: row.area_name,
+    zoneRef: row.zone_ref,
+    zoneName: row.zone_name,
+    assigneeUsername: row.assignee_username,
+    assigneeUserId: row.assignee_user_id !== null ? Number(row.assignee_user_id) : null,
+    templateRef: row.template_ref,
+    type: row.task_type,
+    createdAt: row.created_at instanceof Date
+      ? row.created_at.toISOString()
+      : new Date(row.created_at).toISOString(),
+    updatedAt: row.updated_at instanceof Date
+      ? row.updated_at.toISOString()
+      : new Date(row.updated_at).toISOString(),
+  };
 }
