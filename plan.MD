@@ -60,7 +60,9 @@ Legacy prototype and Figma material are migration references only. The productio
 - Bakki stores its own user mirror/profile rows keyed to `odoo_user_id`, not Odoo custom models.
 - Bakki tasks are mirrored into a Bakki task table keyed to `odoo_task_id`.
 - `bakki.task_template` remains a dedicated Bakki model for instructions, YouTube guidance, checklist schema, and defaults.
-- Mobile app delivery is still a future workstream; current repository scope remains web and desktop admin, but mobile requirements should be gathered with a structured discovery questionnaire before implementation.
+- Mobile app delivery is still a future workstream.
+- Current repository scope remains web and desktop admin.
+- Gather mobile requirements with a structured discovery questionnaire before implementation.
 - The frontend must never infer task state from raw Odoo stage names.
 - Odoo stage/state remains the external workflow source, and Bakki maps it to:
   - `pending`
