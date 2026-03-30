@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Bakki Field",
+    "slug": "bakki-field",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#eef3ed"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bakki.field",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Bakki Field needs location access to capture area boundaries.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Bakki Field needs location access to capture area boundaries while walking."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#eef3ed"
+      },
+      "package": "com.bakki.field",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Bakki Field to use your location to capture area boundaries."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bakki-field"
+      }
+    }
+  }
+}
