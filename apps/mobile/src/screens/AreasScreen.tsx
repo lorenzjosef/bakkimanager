@@ -44,7 +44,10 @@ interface DraftCardProps {
 
 function DraftCard({ draft, onPress, onSync }: DraftCardProps) {
   const status = SYNC_STATUS_LABELS[draft.syncStatus];
-  const canSync = draft.syncStatus === 'local' || draft.syncStatus === 'failed';
+  const canSync =
+    draft.syncStatus === 'local'
+    || draft.syncStatus === 'queued'
+    || draft.syncStatus === 'failed';
 
   return (
     <TouchableOpacity style={styles.draftCard} onPress={onPress} activeOpacity={0.7}>

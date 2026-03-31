@@ -32,6 +32,9 @@ function createContractsService(overrides: Partial<{
       getLatestContractsByAreaRefs: async () => new Map(),
       isConfigured: () => false,
     }) as never,
+    {
+      isConfigured: () => false,
+    } as never,
   );
 }
 

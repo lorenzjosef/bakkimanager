@@ -7,6 +7,33 @@ import { useOfflineStore, type CachedTask, type CachedZone, type CachedArea, typ
 import { useAuthStore } from '../store';
 import { mobileApi } from '../api';
 import type { MobileBootstrapResponse } from '@bakki/domain';
+import { getSessionToken } from '../api';
+
+function assertBootstrapPayload(payload: unknown): asserts payload is MobileBootstrapResponse {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Invalid bootstrap payload: expected an object');
+  }
+
+  const candidate = payload as Partial<MobileBootstrapResponse>;
+  if (!candidate.user || typeof candidate.user !== 'object') {
+    throw new Error('Invalid bootstrap payload: missing user');
+  }
+  if (!Array.isArray(candidate.tasks)) {
+    throw new Error('Invalid bootstrap payload: tasks must be an array');
+  }
+  if (!Array.isArray(candidate.zones)) {
+    throw new Error('Invalid bootstrap payload: zones must be an array');
+  }
+  if (!Array.isArray(candidate.areas)) {
+    throw new Error('Invalid bootstrap payload: areas must be an array');
+  }
+  if (!Array.isArray(candidate.drafts)) {
+    throw new Error('Invalid bootstrap payload: drafts must be an array');
+  }
+  if (!candidate.page || typeof candidate.page !== 'object') {
+    throw new Error('Invalid bootstrap payload: missing page');
+  }
+}
 
 /**
  * Convert bootstrap response to cached entities.
@@ -15,6 +42,13 @@ function convertBootstrapToCache(data: MobileBootstrapResponse) {
   // Convert tasks
   const tasksMap: Record<string, CachedTask> = {};
   for (const task of data.tasks) {
+    // Safely parse assigneeId, handling invalid values
+    let assigneeId: number | null = null;
+    if (task.assigneeId) {
+      const parsed = Number.parseInt(task.assigneeId, 10);
+      assigneeId = Number.isNaN(parsed) ? null : parsed;
+    }
+
     tasksMap[task.id] = {
       id: task.id,
       type: task.type as CachedTask['type'],
@@ -27,7 +61,7 @@ function convertBootstrapToCache(data: MobileBootstrapResponse) {
       areaName: task.areaName,
       zoneId: task.zoneId,
       zoneName: task.zoneName,
-      assigneeId: task.assigneeId ? parseInt(task.assigneeId, 10) : null,
+      assigneeId,
       assigneeName: task.assigneeName,
       templateId: task.templateId,
       templateName: null,
@@ -99,7 +133,11 @@ function convertBootstrapToCache(data: MobileBootstrapResponse) {
         osVersion: '',
         appVersion: '',
       },
-      syncStatus: draft.syncStatus === 'synced' ? 'synced' : 'failed',
+      syncStatus: draft.syncStatus === 'rejected'
+        ? 'rejected'
+        : draft.syncStatus === 'synced'
+          ? 'synced'
+          : 'failed',
       syncError: draft.syncError,
       syncAttempts: 0,
       lastSyncAttemptAt: null,
@@ -129,21 +167,63 @@ function convertBootstrapToCache(data: MobileBootstrapResponse) {
   };
 }
 
+function mergeDraftMaps(
+  existingDrafts: Record<string, AreaDraft>,
+  serverDrafts: Record<string, AreaDraft>,
+): Record<string, AreaDraft> {
+  const merged: Record<string, AreaDraft> = {};
+  const remainingServerById = new Map(Object.values(serverDrafts).map((draft) => [draft.serverId, draft]));
+
+  for (const [localId, draft] of Object.entries(existingDrafts)) {
+    const shouldKeepLocalOnlyDraft = !draft.serverId
+      || draft.syncStatus === 'local'
+      || draft.syncStatus === 'queued'
+      || draft.syncStatus === 'syncing'
+      || draft.syncStatus === 'failed';
+
+    if (shouldKeepLocalOnlyDraft) {
+      merged[localId] = draft;
+      continue;
+    }
+
+    if (draft.serverId) {
+      const serverDraft = remainingServerById.get(draft.serverId);
+      if (serverDraft) {
+        merged[localId] = {
+          ...serverDraft,
+          localId,
+          serverId: draft.serverId,
+        };
+        remainingServerById.delete(draft.serverId);
+        continue;
+      }
+    }
+
+    merged[localId] = draft;
+  }
+
+  for (const serverDraft of remainingServerById.values()) {
+    merged[serverDraft.serverId ?? serverDraft.localId] = serverDraft;
+  }
+
+  return merged;
+}
+
 export function useOfflineSync() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const session = useAuthStore((s) => s.session);
 
-  const {
-    isOnline,
-    bootstrapSyncStatus,
-    bootstrapError,
-    lastBootstrapAt,
-    setOnlineStatus,
-    tasks,
-    ranch,
-    zones,
-    areas,
-    drafts,
-  } = useOfflineStore();
+  const isOnline = useOfflineStore((s) => s.isOnline);
+  const bootstrapSyncStatus = useOfflineStore((s) => s.bootstrapSyncStatus);
+  const bootstrapError = useOfflineStore((s) => s.bootstrapError);
+  const lastBootstrapAt = useOfflineStore((s) => s.lastBootstrapAt);
+  const setOnlineStatus = useOfflineStore((s) => s.setOnlineStatus);
+  const setSyncSessionToken = useOfflineStore((s) => s.setSyncSessionToken);
+  const tasks = useOfflineStore((s) => s.tasks);
+  const ranch = useOfflineStore((s) => s.ranch);
+  const zones = useOfflineStore((s) => s.zones);
+  const areas = useOfflineStore((s) => s.areas);
+  const drafts = useOfflineStore((s) => s.drafts);
 
   /**
    * Perform full data sync from server using bootstrap endpoint.
@@ -157,8 +237,22 @@ export function useOfflineSync() {
     });
 
     try {
-      // Fetch bootstrap data
-      const data = await mobileApi.getBootstrap();
+      const pages: MobileBootstrapResponse[] = [];
+      let cursor: string | undefined;
+      let hasMore = true;
+      const pageLimit = 250;
+      while (hasMore) {
+        const page = await mobileApi.getBootstrapPage(pageLimit, cursor);
+        assertBootstrapPayload(page);
+        pages.push(page);
+        hasMore = page.page.hasMore;
+        cursor = page.page.cursor ?? undefined;
+      }
+      const data = mergeBootstrapPages(pages);
+      const sessionToken = getSessionToken();
+      if (!sessionToken) {
+        throw new Error('Mobile session token missing for sync.');
+      }
 
       // Convert to cached format
       const {
@@ -169,6 +263,8 @@ export function useOfflineSync() {
         draftsMap,
         userProfile,
       } = convertBootstrapToCache(data);
+      const existingDrafts = useOfflineStore.getState().drafts;
+      const mergedDrafts = mergeDraftMaps(existingDrafts, draftsMap);
 
       // Update store
       useOfflineStore.setState({
@@ -176,12 +272,14 @@ export function useOfflineSync() {
         ranch: cachedRanch,
         zones: zonesMap,
         areas: areasMap,
-        drafts: draftsMap,
+        drafts: mergedDrafts,
         userProfile,
         lastBootstrapAt: data.serverTime,
         bootstrapSyncStatus: 'fresh',
         bootstrapError: null,
       });
+      setSyncSessionToken(sessionToken);
+      await useOfflineStore.getState().processSyncQueue();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Sync failed';
       useOfflineStore.setState({
@@ -189,16 +287,28 @@ export function useOfflineSync() {
         bootstrapError: message,
       });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, setSyncSessionToken]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !session) {
+      setSyncSessionToken(null);
+      return;
+    }
+    setSyncSessionToken(getSessionToken());
+  }, [isAuthenticated, session, setSyncSessionToken]);
 
   /**
    * Trigger sync on login if needed.
+   * Note: syncData is intentionally excluded from deps - we only want to trigger
+   * on status changes, not when syncData reference changes. syncData uses current
+   * store state internally.
    */
   useEffect(() => {
     if (isAuthenticated && isOnline && bootstrapSyncStatus === 'stale') {
-      syncData();
+      void syncData();
     }
-  }, [isAuthenticated, isOnline, bootstrapSyncStatus, syncData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isOnline, bootstrapSyncStatus]);
 
   return {
     isOnline,
@@ -215,4 +325,31 @@ export function useOfflineSync() {
     syncData,
     setOnlineStatus,
   };
+}
+
+function mergeBootstrapPages(pages: MobileBootstrapResponse[]): MobileBootstrapResponse {
+  if (pages.length === 0) {
+    throw new Error('Bootstrap returned no pages');
+  }
+  const [first, ...rest] = pages;
+  const merged: MobileBootstrapResponse = {
+    ...first,
+    tasks: [...first.tasks],
+    zones: [...first.zones],
+    areas: [...first.areas],
+    drafts: [...first.drafts],
+    page: {
+      cursor: null,
+      hasMore: false,
+      limit: first.page.limit,
+    },
+  };
+  for (const page of rest) {
+    merged.tasks.push(...page.tasks);
+    merged.zones.push(...page.zones);
+    merged.areas.push(...page.areas);
+    merged.drafts.push(...page.drafts);
+    merged.serverTime = page.serverTime;
+  }
+  return merged;
 }

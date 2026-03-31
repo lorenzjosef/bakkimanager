@@ -10,6 +10,10 @@ const LazyGlobalMapTaskModal = lazy(async () => ({
   default: (await import('@/components/GlobalMapTaskModal')).GlobalMapTaskModal,
 }));
 
+const LazyDraftReviewModal = lazy(async () => ({
+  default: (await import('@/components/DraftReviewModal')).DraftReviewModal,
+}));
+
 function RouteLoadingFallback() {
   return (
     <div className="page-content">
@@ -36,6 +40,21 @@ function RootTaskModal() {
   );
 }
 
+function RootDraftReviewModal() {
+  const isOpen = useUIStore((state) => state.draftReviewModalOpen);
+  const close = useUIStore((state) => state.closeDraftReviewModal);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <LazyDraftReviewModal isOpen={isOpen} onClose={close} />
+    </Suspense>
+  );
+}
+
 function RootLayout() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
@@ -45,6 +64,7 @@ function RootLayout() {
   const closeMapTaskModal = useUIStore((state) => state.closeMapTaskModal);
   const closeMapAreaOverlay = useUIStore((state) => state.closeMapAreaOverlay);
   const closeManagementOverlay = useUIStore((state) => state.closeManagementOverlay);
+  const closeDraftReviewModal = useUIStore((state) => state.closeDraftReviewModal);
   const closeSpeciesDetail = useUIStore((state) => state.closeSpeciesDetail);
   const resetRouteScopedUI = useUIStore((state) => state.resetRouteScopedUI);
   const shellState = buildShellRouteState(pathname);
@@ -76,12 +96,13 @@ function RootLayout() {
       closeMapTaskModal();
       closeMapAreaOverlay();
       closeManagementOverlay();
+      closeDraftReviewModal();
       closeSpeciesDetail();
     };
 
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [closeManagementOverlay, closeMapAreaOverlay, closeMapTaskModal, closeSpeciesDetail]);
+  }, [closeDraftReviewModal, closeManagementOverlay, closeMapAreaOverlay, closeMapTaskModal, closeSpeciesDetail]);
 
   if (isLoginRoute || isStartupRoute) {
     return (
@@ -140,6 +161,7 @@ function RootLayout() {
         <Outlet />
       </Suspense>
       <RootTaskModal />
+      <RootDraftReviewModal />
     </BakkiShell>
   );
 }

@@ -39,6 +39,9 @@ function createPhasesService(overrides?: {
         ?? (async () => []),
     } as never,
     {
+      isConfigured: () => false,
+    } as never,
+    {
       isConfigured:
         overrides?.bakkiUsers?.isConfigured
         ?? (() => false),

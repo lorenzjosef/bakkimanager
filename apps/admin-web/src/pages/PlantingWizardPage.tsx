@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { PageStatePanel, WizardFrameHeader, WizardProgressStepper } from '@bakki/ui';
 import { useUpdateAreaDetailsMutation } from '@/queries/map';
 import { useCreatePlantingPhaseMutation, usePlantingWizardData } from '@/queries/phases';
+import { usePendingDraftsQuery } from '@/queries/drafts';
 import { useSpeciesInventoryData } from '@/queries/species';
 import { usePlantingWizardStore } from '@/store/plantingWizard';
 import {
@@ -39,6 +40,7 @@ export function PlantingWizardPage({ step }: PlantingWizardPageProps) {
   const createPhaseMutation = useCreatePlantingPhaseMutation();
   const updateAreaDetailsMutation = useUpdateAreaDetailsMutation();
   const speciesQuery = useSpeciesInventoryData();
+  const pendingDraftsQuery = usePendingDraftsQuery();
 
   const initialized = usePlantingWizardStore((state) => state.initialized);
   const hydrateFromData = usePlantingWizardStore((state) => state.hydrateFromData);
@@ -287,6 +289,7 @@ export function PlantingWizardPage({ step }: PlantingWizardPageProps) {
               areaSpeciesById={areaSpeciesById}
               areaOptions={areaOptions}
               areas={wizard.areas}
+              pendingDrafts={pendingDraftsQuery.data ?? []}
               onActiveAreaChange={setActiveAreaId}
               onAreaSpeciesChange={(areaId, speciesRef) => void handleAreaSpeciesChange(areaId, speciesRef)}
               onParticipantAreaChange={setParticipantArea}

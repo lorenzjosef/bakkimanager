@@ -193,6 +193,7 @@ export interface SyncQueueItem {
   createdAt: string;
   attempts: number;
   lastAttemptAt: string | null;
+  nextAttemptAt: string | null;
   lastError: string | null;
 }
 
@@ -204,6 +205,7 @@ export interface OfflineStoreState {
   // Sync metadata
   isInitialized: boolean;
   isOnline: boolean;
+  syncSessionToken: string | null;
   lastBootstrapAt: string | null;
   bootstrapSyncStatus: SyncStatus;
   bootstrapError: string | null;
@@ -224,6 +226,7 @@ export interface OfflineStoreActions {
   // Initialization
   initialize: () => Promise<void>;
   setOnlineStatus: (isOnline: boolean) => void;
+  setSyncSessionToken: (token: string | null) => void;
 
   // Bootstrap sync
   bootstrap: (sessionToken: string) => Promise<void>;

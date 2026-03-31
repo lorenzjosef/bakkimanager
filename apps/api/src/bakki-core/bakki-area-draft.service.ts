@@ -71,6 +71,18 @@ export interface ReviewDraftInput {
   notes?: string;
 }
 
+export interface AreaDraftDiagnosticsSummary {
+  configured: boolean;
+  failedValidationCount: number;
+  lastReviewedAt: string | null;
+  lastSyncedAt: string | null;
+  pendingReviewCount: number;
+  promotedCount: number;
+  rejectedCount: number;
+  syncedCount: number;
+  totalDrafts: number;
+}
+
 // ============================================================================
 // Service
 // ============================================================================
@@ -103,7 +115,7 @@ export class BakkiAreaDraftService {
           d.zone_ref,
           z.name as zone_name,
           d.creator_user_id,
-          u.username as creator_username,
+          u.login as creator_username,
           ST_AsGeoJSON(d.boundary_geometry)::json as boundary_geometry,
           d.area_hectares_estimate,
           d.capture_method,
@@ -148,7 +160,7 @@ export class BakkiAreaDraftService {
           d.zone_ref,
           z.name as zone_name,
           d.creator_user_id,
-          u.username as creator_username,
+          u.login as creator_username,
           ST_AsGeoJSON(d.boundary_geometry)::json as boundary_geometry,
           d.area_hectares_estimate,
           d.capture_method,
@@ -194,7 +206,7 @@ export class BakkiAreaDraftService {
           d.zone_ref,
           z.name as zone_name,
           d.creator_user_id,
-          u.username as creator_username,
+          u.login as creator_username,
           ST_AsGeoJSON(d.boundary_geometry)::json as boundary_geometry,
           d.area_hectares_estimate,
           d.capture_method,
@@ -257,7 +269,7 @@ export class BakkiAreaDraftService {
       // Convert GeoJSON to WKT for PostGIS
       const geometryJson = JSON.stringify(input.boundaryGeometry);
 
-      await this.bakkiCore.query(
+      const upsertResult = await this.bakkiCore.query(
         `
           insert into bakki_area_draft (
             draft_ref,
@@ -295,6 +307,8 @@ export class BakkiAreaDraftService {
             synced_at = now(),
             draft_name = excluded.draft_name,
             updated_at = now()
+          where bakki_area_draft.creator_user_id = excluded.creator_user_id
+          returning creator_user_id
         `,
         [
           input.draftRef,
@@ -312,6 +326,18 @@ export class BakkiAreaDraftService {
           input.draftName,
         ],
       );
+
+      if (upsertResult.rowCount === 0) {
+        this.logger.warn(
+          `Rejected draft sync for ${input.draftRef}: creator mismatch for user ${input.creatorUserId}`,
+        );
+        return {
+          draftRef: input.draftRef,
+          success: false,
+          error: 'Draft reference already exists for another user.',
+          validationErrors: ['Draft reference conflict with another account'],
+        };
+      }
 
       this.logger.log(
         `Synced draft ${input.draftRef} for user ${input.creatorUserId}: ${syncStatus}`,
@@ -463,6 +489,61 @@ export class BakkiAreaDraftService {
     this.logger.log(`Deleted draft ${draftRef}`);
 
     return true;
+  }
+
+  async getDiagnosticsSummary(): Promise<AreaDraftDiagnosticsSummary> {
+    if (!this.bakkiCore.isConfigured()) {
+      return {
+        configured: false,
+        failedValidationCount: 0,
+        lastReviewedAt: null,
+        lastSyncedAt: null,
+        pendingReviewCount: 0,
+        promotedCount: 0,
+        rejectedCount: 0,
+        syncedCount: 0,
+        totalDrafts: 0,
+      };
+    }
+
+    await this.ensureSchema();
+    const result = await this.bakkiCore.query<{
+      failed_validation_count: number | string;
+      last_reviewed_at: Date | string | null;
+      last_synced_at: Date | string | null;
+      pending_review_count: number | string;
+      promoted_count: number | string;
+      rejected_count: number | string;
+      synced_count: number | string;
+      total_drafts: number | string;
+    }>(
+      `
+        select
+          count(*) as total_drafts,
+          count(*) filter (where sync_status = 'synced') as synced_count,
+          count(*) filter (where sync_status = 'rejected') as rejected_count,
+          count(*) filter (where sync_status = 'rejected') as failed_validation_count,
+          count(*) filter (where review_status = 'pending' and sync_status = 'synced') as pending_review_count,
+          count(*) filter (where promoted_area_ref is not null) as promoted_count,
+          max(synced_at) as last_synced_at,
+          max(reviewed_at) as last_reviewed_at
+        from bakki_area_draft
+      `,
+      [],
+    );
+
+    const row = result.rows[0];
+    return {
+      configured: true,
+      failedValidationCount: row ? Number(row.failed_validation_count) : 0,
+      lastReviewedAt: row?.last_reviewed_at ? formatDate(row.last_reviewed_at) : null,
+      lastSyncedAt: row?.last_synced_at ? formatDate(row.last_synced_at) : null,
+      pendingReviewCount: row ? Number(row.pending_review_count) : 0,
+      promotedCount: row ? Number(row.promoted_count) : 0,
+      rejectedCount: row ? Number(row.rejected_count) : 0,
+      syncedCount: row ? Number(row.synced_count) : 0,
+      totalDrafts: row ? Number(row.total_drafts) : 0,
+    };
   }
 
   /**

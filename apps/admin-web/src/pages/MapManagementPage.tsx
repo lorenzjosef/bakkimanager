@@ -4,6 +4,9 @@ import {
   MapManagementOverlayCard,
 } from './map-management.sections';
 import { useMapManagementPageState } from './map-management.page-state';
+import { useUIStore } from '@/store/ui';
+import { usePendingDraftsQuery } from '@/queries/drafts';
+import { useSessionStatus } from '@/queries/auth';
 
 export function MapManagementPage() {
   const {
@@ -68,6 +71,11 @@ export function MapManagementPage() {
     zoneKey,
     zoneName,
   } = useMapManagementPageState();
+  const openDraftReviewModal = useUIStore((state) => state.openDraftReviewModal);
+  const sessionQuery = useSessionStatus();
+  const isOwner = sessionQuery.data?.session?.user.role === 'owner';
+  const pendingDraftsQuery = usePendingDraftsQuery();
+  const pendingDraftCount = pendingDraftsQuery.data?.length ?? 0;
 
   if (renderState === 'loading') {
     return (
@@ -142,6 +150,19 @@ export function MapManagementPage() {
               toggleRanchLayer={() => setShowRanchLayer((value) => !value)}
               toggleZoneLayer={() => setShowZoneLayer((value) => !value)}
             />
+
+            {isOwner ? (
+              <button
+                className="map-management-drafts-button"
+                onClick={openDraftReviewModal}
+                type="button"
+              >
+                <span>Mobile Drafts</span>
+                {pendingDraftCount > 0 && (
+                  <span className="map-management-drafts-badge">{pendingDraftCount}</span>
+                )}
+              </button>
+            ) : null}
 
             <div className="map-management-figma-overlay" id="map-management-overlay" hidden={!isOverlayVisible}>
               {isOverlayVisible ? (

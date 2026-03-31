@@ -63,6 +63,14 @@ function createTasksService(overrides?: {
       listActive: async () => taskTemplateSummariesFixture,
     } as never,
     {
+      getPlot: async () => null,
+      isConfigured: () => false,
+      listPlots: async () => [],
+      recordSample: async () => {
+        throw new Error('not used in this test');
+      },
+    } as never,
+    {
       getById: async () => null,
       isConfigured: () => false,
     } as never,

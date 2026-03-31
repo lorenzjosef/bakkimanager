@@ -6106,6 +6106,169 @@ body.modal-open {
   color: #191c1d;
 }
 
+.draft-review-card-shell {
+  width: min(900px, 100%);
+}
+
+.draft-review-body {
+  gap: 16px;
+}
+
+.draft-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.draft-review-card {
+  border: 1px solid rgba(194, 201, 187, 0.45);
+  border-radius: 12px;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.draft-review-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draft-review-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.draft-review-title h4 {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  color: #191c1d;
+}
+
+.draft-review-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.draft-status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.draft-status-pending {
+  background: rgba(234, 179, 8, 0.16);
+  color: #92400e;
+}
+
+.draft-status-approved {
+  background: rgba(22, 163, 74, 0.16);
+  color: #166534;
+}
+
+.draft-status-rejected {
+  background: rgba(220, 38, 38, 0.14);
+  color: #991b1b;
+}
+
+.draft-review-details {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+}
+
+.draft-review-detail-row {
+  display: flex;
+  gap: 8px;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.draft-review-label {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.draft-reject-form {
+  margin-top: 10px;
+}
+
+.draft-reject-textarea {
+  width: 100%;
+  min-height: 64px;
+  border: 1px solid rgba(194, 201, 187, 0.7);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  line-height: 18px;
+  resize: vertical;
+}
+
+.draft-review-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.draft-action-btn {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.draft-action-approve,
+.draft-action-promote {
+  background: #154212;
+  color: #ffffff;
+}
+
+.draft-action-reject {
+  background: rgba(234, 179, 8, 0.18);
+  color: #92400e;
+}
+
+.draft-action-delete {
+  background: rgba(220, 38, 38, 0.14);
+  color: #991b1b;
+}
+
+.draft-action-cancel {
+  background: rgba(107, 114, 128, 0.15);
+  color: #374151;
+}
+
+.draft-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.draft-review-empty,
+.draft-review-loading {
+  padding: 20px;
+  border-radius: 10px;
+  background: rgba(243, 244, 246, 0.7);
+  color: #374151;
+}
+
+.draft-review-empty-hint {
+  margin: 6px 0 0;
+  color: #6b7280;
+}
+
 .map-task-figma-type-grid,
 .map-task-figma-grid,
 .map-task-figma-actions {
@@ -6659,6 +6822,41 @@ textarea.map-task-figma-control {
   width: 100%;
   height: 1px;
   background: rgba(194, 201, 187, 0.3);
+}
+
+.map-management-drafts-button {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(194, 201, 187, 0.45);
+  box-shadow: 0 10px 18px -10px rgba(0, 0, 0, 0.18);
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.map-management-drafts-button:hover {
+  background: #ffffff;
+}
+
+.map-management-drafts-badge {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  background: #154212;
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1;
 }
 
 .map-management-figma-overlay[hidden] {

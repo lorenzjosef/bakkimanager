@@ -7,6 +7,7 @@ import {
 import { BakkiAreaMetricsService } from '../../bakki-core/bakki-area-metrics.service';
 import { BakkiGeometryService } from '../../bakki-core/bakki-geometry.service';
 import { BakkiPhaseService } from '../../bakki-core/bakki-phase.service';
+import { BakkiTreeSurveyService } from '../../bakki-core/bakki-tree-survey.service';
 
 @Injectable()
 export class ContractsService {
@@ -16,6 +17,7 @@ export class ContractsService {
     private readonly bakkiAreaMetrics: BakkiAreaMetricsService,
     private readonly bakkiGeometry: BakkiGeometryService,
     private readonly bakkiPhases: BakkiPhaseService,
+    private readonly bakkiTreeSurvey: BakkiTreeSurveyService,
   ) {}
 
   async getSummary(): Promise<ContractsSummary> {
@@ -80,7 +82,10 @@ export class ContractsService {
   }
 
   private async getAreaMetricsByAreaRef(areaRefs: string[]) {
-    if (!this.bakkiAreaMetrics.isConfigured() || areaRefs.length === 0) {
+    if (
+      (!this.bakkiAreaMetrics.isConfigured() && !this.bakkiTreeSurvey.isConfigured())
+      || areaRefs.length === 0
+    ) {
       return new Map<string, Awaited<ReturnType<BakkiAreaMetricsService['listByAreaRefs']>>[number]>();
     }
 

@@ -12,7 +12,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useOfflineStore, type CachedTask, type TaskSortField, type SortDirection } from '@bakki/mobile-offline';
+import {
+  useOfflineStore,
+  type CachedTask,
+  type TaskFilters,
+  type TaskSortField,
+  type SortDirection,
+} from '@bakki/mobile-offline';
 import { useOfflineSync } from '../hooks';
 import type { TaskStackParamList } from '../navigation/types';
 
@@ -119,17 +125,17 @@ export function TasksScreen() {
   const getTasks = useOfflineStore((s) => s.getTasks);
 
   const tasks = useMemo(() => {
-    const filters: { workflowState?: string[]; search?: string } = {};
+    const filters: TaskFilters = {};
 
     if (activeTab !== 'all') {
-      filters.workflowState = [activeTab];
+      filters.workflowState = [activeTab as 'pending' | 'in_progress' | 'done'];
     }
 
     if (searchQuery.trim()) {
       filters.search = searchQuery.trim();
     }
 
-    return getTasks(filters as any, { field: sortField, direction: sortDirection });
+    return getTasks(filters, { field: sortField, direction: sortDirection });
   }, [getTasks, activeTab, searchQuery, sortField, sortDirection]);
 
   const handleRefresh = useCallback(() => {

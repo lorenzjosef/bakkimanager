@@ -12,7 +12,8 @@ on bakki_area_metrics (zone_ref);
 
 create table if not exists bakki_area_observation (
   id bigserial primary key,
-  area_ref text not null references bakki_area_metrics(area_ref) on delete cascade,
+  -- FK is added in 009_area_integrity after geometry tables exist.
+  area_ref text not null,
   task_ref text,
   actor_user_id bigint references bakki_user(id) on delete set null,
   measured_density_per_100sqm numeric not null,

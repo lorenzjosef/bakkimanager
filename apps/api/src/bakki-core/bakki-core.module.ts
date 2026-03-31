@@ -10,11 +10,12 @@ import { BakkiPhaseService } from './bakki-phase.service';
 import { BakkiSpeciesService } from './bakki-species.service';
 import { BakkiTaskMirrorService } from './bakki-task-mirror.service';
 import { BakkiTaskTemplateService } from './bakki-task-template.service';
+import { BakkiTreeSurveyService } from './bakki-tree-survey.service';
 import { BakkiUserMirrorService } from './bakki-user-mirror.service';
 
 @Global()
 @Module({
-  providers: [BakkiCoreService, BakkiUserMirrorService, BakkiTaskTemplateService, BakkiTaskMirrorService, BakkiPhaseService, BakkiAuditLogService, BakkiAreaMetricsService, BakkiAreaDraftService, BakkiGeometryService, BakkiMapAuditService, BakkiMediaAssetService, BakkiSpeciesService],
-  exports: [BakkiCoreService, BakkiUserMirrorService, BakkiTaskTemplateService, BakkiTaskMirrorService, BakkiPhaseService, BakkiAuditLogService, BakkiAreaMetricsService, BakkiAreaDraftService, BakkiGeometryService, BakkiMapAuditService, BakkiMediaAssetService, BakkiSpeciesService],
+  providers: [BakkiCoreService, BakkiUserMirrorService, BakkiTaskTemplateService, BakkiTaskMirrorService, BakkiPhaseService, BakkiAuditLogService, BakkiAreaMetricsService, BakkiAreaDraftService, BakkiGeometryService, BakkiMapAuditService, BakkiMediaAssetService, BakkiSpeciesService, BakkiTreeSurveyService],
+  exports: [BakkiCoreService, BakkiUserMirrorService, BakkiTaskTemplateService, BakkiTaskMirrorService, BakkiPhaseService, BakkiAuditLogService, BakkiAreaMetricsService, BakkiAreaDraftService, BakkiGeometryService, BakkiMapAuditService, BakkiMediaAssetService, BakkiSpeciesService, BakkiTreeSurveyService],
 })
 export class BakkiCoreModule {}

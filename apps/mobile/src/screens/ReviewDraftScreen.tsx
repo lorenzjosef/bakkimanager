@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -40,6 +40,24 @@ export function ReviewDraftScreen() {
   // If viewing existing draft
   const existingDraft = draftId ? getDraft(draftId) : null;
 
+  // Validate we have either a valid draftId or capturedData
+  const hasValidData = !!(existingDraft || (capturedData && capturedData.points && capturedData.points.length >= 3 && capturedData.zoneId));
+
+  // Show error and navigate back if invalid state
+  useEffect(() => {
+    if (!hasValidData) {
+      Alert.alert(
+        'Invalid Data',
+        'Missing required area data. Please capture the area again.',
+        [{ text: 'Go Back', onPress: () => navigation.goBack() }]
+      );
+    }
+  }, [hasValidData, navigation]);
+
+  if (!hasValidData) {
+    return null;
+  }
+
   // Points and metadata
   const points: CapturedPoint[] = existingDraft
     ? existingDraft.rawCapturePoints
@@ -49,7 +67,7 @@ export function ReviewDraftScreen() {
     ? existingDraft.captureMethod
     : capturedData?.captureMethod || 'point_by_point';
 
-  const zone = getZone(zoneId);
+  const zone = zoneId ? getZone(zoneId) : undefined;
 
   const [name, setName] = useState(existingDraft?.name || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -89,8 +107,13 @@ export function ReviewDraftScreen() {
       return;
     }
 
-    if (!geometry || !zone) {
-      Alert.alert('Error', 'Unable to create area. Missing required data.');
+    if (!geometry) {
+      Alert.alert('Invalid Geometry', 'Unable to create area polygon. Please recapture with at least 3 points.');
+      return;
+    }
+
+    if (!zone) {
+      Alert.alert('Zone Not Found', 'The selected zone could not be found. Please go back and try again.');
       return;
     }
 
@@ -178,7 +201,11 @@ export function ReviewDraftScreen() {
   const isEditable = !existingDraft;
   const canSync =
     existingDraft &&
-    (existingDraft.syncStatus === 'local' || existingDraft.syncStatus === 'failed');
+    (
+      existingDraft.syncStatus === 'local'
+      || existingDraft.syncStatus === 'failed'
+      || existingDraft.syncStatus === 'queued'
+    );
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>

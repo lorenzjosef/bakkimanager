@@ -7,6 +7,7 @@ export interface UpdateAreaMetricsResponse {
   areaId: string;
   areaName: string;
   densityPer100Sqm: number;
+  source?: 'legacy_area_metrics' | 'plot_estimate_projection';
   treeCount: number | null;
   updatedAt: string;
   zoneId: string | null;

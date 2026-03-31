@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { PoolClient } from 'pg';
 import { BakkiCoreService } from './bakki-core.service';
 import { BakkiGeometryService } from './bakki-geometry.service';
+import { BakkiTreeSurveyService } from './bakki-tree-survey.service';
 import { requireFirstRow } from './query-result.utils';
 import { ensureSchemaInitialized } from './schema-init.utils';
 
@@ -10,6 +11,7 @@ export interface BakkiAreaMetricsRecord {
   areaRef: string;
   currentDensityPer100Sqm: number;
   currentTreeCount: number | null;
+  source?: 'legacy_area_metrics' | 'plot_estimate_projection';
   updatedAt: string;
   zoneRef: string | null;
 }
@@ -38,6 +40,7 @@ export class BakkiAreaMetricsService {
   constructor(
     private readonly bakkiCore: BakkiCoreService,
     private readonly bakkiGeometry: BakkiGeometryService,
+    private readonly bakkiTreeSurvey: BakkiTreeSurveyService,
   ) {}
 
   isConfigured() {
@@ -45,25 +48,8 @@ export class BakkiAreaMetricsService {
   }
 
   async getByAreaRef(areaRef: string) {
-    await this.ensureSchema();
-    const result = await this.bakkiCore.query<BakkiAreaMetricsRow>(
-      `
-        select
-          area_ref,
-          zone_ref,
-          area_name,
-          current_density_per_100sqm,
-          current_tree_count,
-          updated_at
-        from bakki_area_metrics
-        where area_ref = $1
-        limit 1
-      `,
-      [areaRef],
-    );
-
-    const row = result.rows[0];
-    return row ? mapAreaRow(row) : null;
+    const records = await this.listByAreaRefs([areaRef]);
+    return records[0] ?? null;
   }
 
   async listByZoneRefs(zoneRefs: string[]) {
@@ -87,8 +73,29 @@ export class BakkiAreaMetricsService {
       `,
       [zoneRefs],
     );
+    const recordsByAreaRef = new Map(
+      result.rows.map((row) => {
+        const mapped = mapAreaRow(row);
+        return [mapped.areaRef, mapped] as const;
+      }),
+    );
 
-    return result.rows.map(mapAreaRow);
+    try {
+      const allAreas = await this.bakkiGeometry.listAreas();
+      const areaRefs = [...allAreas.values()]
+        .filter((area) => zoneRefs.includes(area.zoneRef))
+        .map((area) => area.areaRef);
+      const projected = await this.listProjectedByAreaRefs(areaRefs);
+      for (const [areaRef, projectedRecord] of projected) {
+        recordsByAreaRef.set(areaRef, projectedRecord);
+      }
+    } catch {
+      // Keep legacy records only when geometry/projection lookups are unavailable.
+    }
+
+    return [...recordsByAreaRef.values()]
+      .filter((record) => record.zoneRef && zoneRefs.includes(record.zoneRef))
+      .sort((left, right) => left.areaRef.localeCompare(right.areaRef));
   }
 
   async listByAreaRefs(areaRefs: string[]) {
@@ -112,8 +119,20 @@ export class BakkiAreaMetricsService {
       `,
       [areaRefs],
     );
+    const recordsByAreaRef = new Map(
+      result.rows.map((row) => {
+        const mapped = mapAreaRow(row);
+        return [mapped.areaRef, mapped] as const;
+      }),
+    );
+    const projected = await this.listProjectedByAreaRefs(areaRefs);
+    for (const [areaRef, projectedRecord] of projected) {
+      recordsByAreaRef.set(areaRef, projectedRecord);
+    }
 
-    return result.rows.map(mapAreaRow);
+    return areaRefs
+      .map((areaRef) => recordsByAreaRef.get(areaRef))
+      .filter((record): record is BakkiAreaMetricsRecord => Boolean(record));
   }
 
   async listLatestObservationRefsByAreaRefs(areaRefs: string[]) {
@@ -357,6 +376,40 @@ export class BakkiAreaMetricsService {
     this.schemaEnsured = true;
   }
 
+  private async listProjectedByAreaRefs(areaRefs: string[]) {
+    if (!this.bakkiTreeSurvey.isConfigured() || areaRefs.length === 0) {
+      return new Map<string, BakkiAreaMetricsRecord>();
+    }
+
+    try {
+      const rollups = await this.bakkiTreeSurvey.listAreaRollups(areaRefs);
+      if (rollups.size === 0) {
+        return new Map<string, BakkiAreaMetricsRecord>();
+      }
+
+      const areaCatalog = await this.bakkiGeometry.getAreasByRefs([...rollups.keys()]);
+      return new Map(
+        [...rollups.values()].map((rollup) => {
+          const area = areaCatalog.get(rollup.areaRef);
+          return [
+            rollup.areaRef,
+            {
+              areaRef: rollup.areaRef,
+              zoneRef: rollup.zoneRef ?? area?.zoneRef ?? null,
+              areaName: area?.areaName ?? rollup.areaRef,
+              currentDensityPer100Sqm: rollup.estimatedDensityPer100Sqm,
+              currentTreeCount: Math.round(rollup.estimatedTreeCount),
+              source: 'plot_estimate_projection',
+              updatedAt: rollup.updatedAt,
+            } satisfies BakkiAreaMetricsRecord,
+          ] as const;
+        }),
+      );
+    } catch {
+      return new Map<string, BakkiAreaMetricsRecord>();
+    }
+  }
+
   private async requireAreaCatalogRecord(areaRef: string) {
     const areaCatalog = await this.bakkiGeometry.getAreasByRefs([areaRef]);
     const area = areaCatalog.get(areaRef);
@@ -389,6 +442,7 @@ function mapAreaRow(row: BakkiAreaMetricsRow): BakkiAreaMetricsRecord {
     areaName: row.area_name,
     currentDensityPer100Sqm: Number(row.current_density_per_100sqm),
     currentTreeCount: row.current_tree_count === null ? null : Number(row.current_tree_count),
+    source: 'legacy_area_metrics',
     updatedAt:
       row.updated_at instanceof Date
         ? row.updated_at.toISOString()

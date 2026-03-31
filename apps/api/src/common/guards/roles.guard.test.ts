@@ -21,12 +21,16 @@ function createMockContext(user?: AuthenticatedUser): ExecutionContext {
 function createMockUser(role: 'owner' | 'planter'): AuthenticatedUser {
   return {
     session: {
-      token: 'test-token',
+      authenticated: true,
+      issuedAt: new Date().toISOString(),
       user: {
         id: 'user-42',
-        login: 'test.user',
+        username: 'test.user',
         displayName: 'Test User',
         role,
+        mobileAccessEnabled: true,
+        canResetCredentials: false,
+        activePlantingPhaseId: null,
       },
       expiresAt: new Date(Date.now() + 3600000).toISOString(),
     },

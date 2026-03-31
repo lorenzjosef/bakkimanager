@@ -99,10 +99,14 @@ export interface CreateTaskResponse {
 }
 
 export interface RecordMonitoringResultRequest {
+  areaId?: string;
   densityPer100Sqm: number;
+  meanDiameterCm?: number;
+  meanHeightM?: number;
   treeCount?: number;
   observedAt?: string;
   notes?: string;
+  sampledAreaSqm?: number;
 }
 
 export interface RecordMonitoringResultResponse {

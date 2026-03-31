@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { OdooModule } from '../../odoo/odoo.module';
+import { AuditModule } from '../audit/audit.module';
 import { AuthModule } from '../auth/auth.module';
 import { DashboardModule } from '../dashboard/dashboard.module';
 import { MediaModule } from '../media/media.module';
@@ -10,7 +11,7 @@ import { HealthService } from './health.service';
 import { OdooTaskSyncService } from './odoo-task-sync.service';
 
 @Module({
-  imports: [OdooModule, AuthModule, DashboardModule, MediaModule, TasksModule, UsersModule],
+  imports: [OdooModule, AuthModule, AuditModule, DashboardModule, MediaModule, TasksModule, UsersModule],
   controllers: [HealthController],
   providers: [HealthService, OdooTaskSyncService],
 })

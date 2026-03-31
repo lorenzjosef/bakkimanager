@@ -4,6 +4,7 @@ import type {
   PlantingWizardData,
   SpeciesRecord,
 } from '@bakki/domain';
+import type { PendingDraft } from '@/queries/drafts';
 import { localAssetUrls } from '@bakki/domain';
 import { EmptyStatePanel, InlineStatusBanner } from '@bakki/ui';
 import { PlantingWizardAreaMap } from './planting-wizard.area-map';
@@ -39,6 +40,7 @@ export function PhaseAreasStep({
   areaOptions,
   areaSpeciesById,
   activeArea,
+  pendingDrafts,
   participantAssignmentsById,
   selectedAreaIds,
   selectedParticipants,
@@ -55,6 +57,7 @@ export function PhaseAreasStep({
   areaOptions: PlantingWizardData['confirm']['zones'];
   areaSpeciesById: Record<string, string>;
   activeArea: PlantingWizardAreaData | null;
+  pendingDrafts: PendingDraft[];
   participantAssignmentsById: Record<string, PlantingParticipantAssignmentDraft>;
   selectedAreaIds: string[];
   selectedParticipants: Array<PlantingWizardData['confirm']['teamMembers'][number]>;
@@ -199,6 +202,15 @@ export function PhaseAreasStep({
         </div>
 
         <aside className="phase-wizard-selection-card phase-wizard-planter-panel">
+          {pendingDrafts.length > 0 ? (
+            <InlineStatusBanner
+              className="bakki-page-inline-state"
+              heading={`${pendingDrafts.length} mobile draft${pendingDrafts.length === 1 ? '' : 's'} pending review`}
+              message="Pending mobile area drafts are reviewed in Map Management → Mobile Drafts and are not yet selectable in this wizard."
+              tone="warning"
+            />
+          ) : null}
+
           <div className="phase-wizard-selection-head">
             <h2>Planter Assignments</h2>
             <span className="phase-wizard-selection-chip">

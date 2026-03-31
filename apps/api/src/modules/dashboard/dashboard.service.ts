@@ -9,6 +9,7 @@ import { BakkiGeometryService } from '../../bakki-core/bakki-geometry.service';
 import { BakkiPhaseService } from '../../bakki-core/bakki-phase.service';
 import { BakkiSpeciesService } from '../../bakki-core/bakki-species.service';
 import { BakkiTaskMirrorService } from '../../bakki-core/bakki-task-mirror.service';
+import { BakkiTreeSurveyService } from '../../bakki-core/bakki-tree-survey.service';
 import {
   inferTaskTypeFromTitle,
   inferWorkflowStateFromStageLabel,
@@ -57,6 +58,7 @@ export class DashboardService {
     private readonly bakkiPhases: BakkiPhaseService,
     private readonly bakkiSpecies: BakkiSpeciesService,
     private readonly bakkiTasks: BakkiTaskMirrorService,
+    private readonly bakkiTreeSurvey: BakkiTreeSurveyService,
     private readonly odoo: OdooService,
     private readonly dashboardWeather: DashboardWeatherService,
     private readonly contractsService: ContractsService,
@@ -187,7 +189,7 @@ export class DashboardService {
   private async fetchAreaMetricsSummary(): Promise<AreaMetricsSummary> {
     const zoneSummaries = await this.bakkiGeometry.listZoneSummaries();
 
-    if (!this.bakkiAreaMetrics.isConfigured()) {
+    if (!this.bakkiAreaMetrics.isConfigured() && !this.bakkiTreeSurvey.isConfigured()) {
       return {
         activeZoneCount: zoneSummaries.length,
         averageDensity: null,

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type {
   MobileBootstrapArea,
   MobileBootstrapDraft,
@@ -14,8 +14,23 @@ import { BakkiAreaDraftService } from '../../bakki-core/bakki-area-draft.service
 import { BakkiAreaMetricsService } from '../../bakki-core/bakki-area-metrics.service';
 import { BakkiGeometryService } from '../../bakki-core/bakki-geometry.service';
 import { BakkiTaskMirrorService } from '../../bakki-core/bakki-task-mirror.service';
+import { BakkiTaskTemplateService } from '../../bakki-core/bakki-task-template.service';
+import { BakkiTreeSurveyService } from '../../bakki-core/bakki-tree-survey.service';
+import { BakkiSpeciesService } from '../../bakki-core/bakki-species.service';
+import { BakkiUserMirrorService } from '../../bakki-core/bakki-user-mirror.service';
+import { AuditService } from '../audit/audit.service';
 import { AuthService } from '../auth/auth.service';
+import { parseTrailingNumericId } from '../users/user-identity.helpers';
 import type { SyncDraftsDto } from './dto';
+import { validateGeoJsonGeometry } from '../../common/validation';
+
+const DEFAULT_BOOTSTRAP_LIMIT = 250;
+const MAX_BOOTSTRAP_LIMIT = 1000;
+
+interface BootstrapQueryOptions {
+  cursor?: string;
+  limit?: number;
+}
 
 @Injectable()
 export class MobileService {
@@ -23,17 +38,25 @@ export class MobileService {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly auditService: AuditService,
     private readonly bakkiAreaDraft: BakkiAreaDraftService,
     private readonly bakkiAreaMetrics: BakkiAreaMetricsService,
     private readonly bakkiGeometry: BakkiGeometryService,
     private readonly bakkiTaskMirror: BakkiTaskMirrorService,
+    private readonly bakkiTaskTemplates: BakkiTaskTemplateService,
+    private readonly bakkiTreeSurvey: BakkiTreeSurveyService,
+    private readonly bakkiSpecies: BakkiSpeciesService,
+    private readonly bakkiUsers: BakkiUserMirrorService,
   ) {}
 
   /**
    * Get bootstrap data for initial mobile sync.
    * Returns user, tasks, geometry, and draft data.
    */
-  async getBootstrap(sessionToken: string): Promise<MobileBootstrapResponse> {
+  async getBootstrap(
+    sessionToken: string,
+    options?: BootstrapQueryOptions,
+  ): Promise<MobileBootstrapResponse> {
     // Get session and user
     const { session } = await this.authService.getSession(sessionToken);
     if (!session?.user) {
@@ -41,7 +64,16 @@ export class MobileService {
     }
 
     const user = session.user;
-    const userId = parseInt(user.id, 10);
+
+    // Verify mobile access is enabled for this user
+    if (!user.mobileAccessEnabled) {
+      throw new ForbiddenException('Mobile access is not enabled for this account');
+    }
+
+    const userId = parseTrailingNumericId(user.id);
+    if (!userId) {
+      throw new Error('Invalid session user reference');
+    }
 
     // Fetch all data in parallel
     const [
@@ -50,12 +82,20 @@ export class MobileService {
       zoneSummaries,
       areaFeatureCollection,
       drafts,
+      areaCatalog,
+      templateSummaries,
+      speciesRecords,
+      userRecords,
     ] = await Promise.all([
       this.bakkiTaskMirror.listTasksForMobile(userId),
       this.bakkiGeometry.getRanchGeometryFeatureCollection(),
       this.bakkiGeometry.listZoneSummaries(),
       this.bakkiGeometry.getAreaGeometryFeatureCollection(),
       this.bakkiAreaDraft.getDraftsByUser(userId),
+      this.bakkiGeometry.listAreas(),
+      this.bakkiTaskTemplates.listActive(),
+      this.bakkiSpecies.isConfigured() ? this.bakkiSpecies.listSpecies() : Promise.resolve([]),
+      this.bakkiUsers.isConfigured() ? this.bakkiUsers.listUsers() : Promise.resolve([]),
     ]);
 
     // Get zone geometry separately
@@ -75,6 +115,15 @@ export class MobileService {
     const metricsMap = new Map(
       areaMetrics.map((m) => [m.areaRef, m]),
     );
+    const templateMap = new Map(
+      templateSummaries.map((template) => [template.templateRef, template]),
+    );
+    const speciesMap = new Map(
+      speciesRecords.map((species) => [species.speciesRef, species]),
+    );
+    const reviewerMap = new Map(
+      userRecords.map((record) => [record.id, record.displayName]),
+    );
 
     // Transform user
     const bootstrapUser: MobileBootstrapUser = {
@@ -87,7 +136,7 @@ export class MobileService {
     };
 
     // Transform tasks
-    const bootstrapTasks: MobileBootstrapTask[] = tasks.map((t) => ({
+    const allBootstrapTasks: MobileBootstrapTask[] = tasks.map((t) => ({
       id: t.taskRef,
       type: t.type ?? 'general',
       title: t.title,
@@ -102,7 +151,7 @@ export class MobileService {
       assigneeId: t.assigneeUserId ? String(t.assigneeUserId) : null,
       assigneeName: t.assigneeUsername ?? null,
       templateId: t.templateRef ?? null,
-      youtubeUrl: null, // TODO: Add when template data is available
+      youtubeUrl: t.templateRef ? (templateMap.get(t.templateRef)?.youtubeUrl ?? null) : null,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
     }));
@@ -124,7 +173,7 @@ export class MobileService {
     }
 
     // Transform zones
-    const bootstrapZones: MobileBootstrapZone[] = zoneSummaries.map((z) => {
+    const allBootstrapZones: MobileBootstrapZone[] = zoneSummaries.map((z) => {
       const feature = zoneGeometryMap.get(z.id);
       return {
         id: z.id,
@@ -137,9 +186,11 @@ export class MobileService {
     });
 
     // Transform areas
-    const bootstrapAreas: MobileBootstrapArea[] = areaFeatureCollection.features.map((f) => {
+    const allBootstrapAreas: MobileBootstrapArea[] = areaFeatureCollection.features.map((f) => {
       const metrics = metricsMap.get(String(f.id));
       const zone = zoneMap.get(f.properties.zoneRef);
+      const assignedSpeciesRef = areaCatalog.get(String(f.id))?.assignedSpeciesRef ?? null;
+      const species = assignedSpeciesRef ? speciesMap.get(assignedSpeciesRef) : null;
       return {
         id: String(f.id),
         name: f.properties.name,
@@ -147,8 +198,8 @@ export class MobileService {
         zoneName: zone?.name ?? '',
         hectaresTotal: f.properties.hectaresEstimate ?? 0,
         density: metrics?.currentDensityPer100Sqm ?? null,
-        speciesId: null, // TODO: Add species
-        speciesName: null,
+        speciesId: assignedSpeciesRef,
+        speciesName: species?.commonName ?? null,
         geometry: f.geometry as import('@bakki/domain').GeoJsonGeometry,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -156,7 +207,7 @@ export class MobileService {
     });
 
     // Transform drafts
-    const bootstrapDrafts: MobileBootstrapDraft[] = drafts.map((d) => ({
+    const allBootstrapDrafts: MobileBootstrapDraft[] = drafts.map((d) => ({
       serverId: d.draftRef,
       name: d.draftName,
       zoneId: d.zoneRef,
@@ -168,12 +219,27 @@ export class MobileService {
       syncStatus: d.syncStatus,
       syncError: d.syncErrorMessage,
       reviewStatus: d.reviewStatus,
-      reviewerName: null, // TODO: Add reviewer lookup
+      reviewerName: d.reviewerUserId ? (reviewerMap.get(d.reviewerUserId) ?? null) : null,
       reviewedAt: d.reviewedAt,
       rejectionReason: d.reviewerNotes,
       createdAt: d.createdAt,
       updatedAt: d.updatedAt,
     }));
+
+    const limit = normalizeBootstrapLimit(options?.limit);
+    const offset = parseBootstrapOffset(options?.cursor);
+    const nextOffset = offset + limit;
+
+    const bootstrapTasks = allBootstrapTasks.slice(offset, nextOffset);
+    const bootstrapZones = allBootstrapZones.slice(offset, nextOffset);
+    const bootstrapAreas = allBootstrapAreas.slice(offset, nextOffset);
+    const bootstrapDrafts = allBootstrapDrafts.slice(offset, nextOffset);
+    const hasMore = nextOffset < Math.max(
+      allBootstrapTasks.length,
+      allBootstrapZones.length,
+      allBootstrapAreas.length,
+      allBootstrapDrafts.length,
+    );
 
     return {
       user: bootstrapUser,
@@ -182,6 +248,11 @@ export class MobileService {
       zones: bootstrapZones,
       areas: bootstrapAreas,
       drafts: bootstrapDrafts,
+      page: {
+        cursor: hasMore ? encodeBootstrapOffset(nextOffset) : null,
+        hasMore,
+        limit,
+      },
       serverTime: new Date().toISOString(),
     };
   }
@@ -198,10 +269,32 @@ export class MobileService {
       throw new Error('Invalid session');
     }
 
-    const userId = parseInt(session.user.id, 10);
+    // Verify mobile access is enabled for this user
+    if (!session.user.mobileAccessEnabled) {
+      throw new ForbiddenException('Mobile access is not enabled for this account');
+    }
+
+    const userId = parseTrailingNumericId(session.user.id);
+    if (!userId) {
+      throw new Error('Invalid session user reference');
+    }
     const results: MobileSyncDraftResult[] = [];
 
     for (const draft of body.drafts) {
+      try {
+        validateGeoJsonGeometry(draft.geometry, ['Polygon', 'MultiPolygon']);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Invalid geometry';
+        results.push({
+          localId: draft.localId,
+          serverId: null,
+          success: false,
+          error: message,
+          validationErrors: [message],
+        });
+        continue;
+      }
+
       const result = await this.bakkiAreaDraft.syncDraft({
         draftRef: draft.localId,
         zoneRef: draft.zoneId,
@@ -228,6 +321,18 @@ export class MobileService {
     this.logger.log(
       `Synced ${results.length} drafts for user ${userId}: ${results.filter((r) => r.success).length} successful`,
     );
+
+    await this.auditService.recordEvent({
+      actor: session.user.id,
+      message: `Synced ${results.filter((r) => r.success).length}/${results.length} mobile drafts`,
+      payload: {
+        failed: results.filter((item) => !item.success).length,
+        synced: results.filter((item) => item.success).length,
+        total: results.length,
+      },
+      targetModel: 'bakki_area_draft',
+      type: 'mobile.drafts.sync',
+    });
 
     return {
       results,
@@ -263,29 +368,101 @@ export class MobileService {
       throw new Error('Invalid session');
     }
 
-    const userId = parseInt(session.user.id, 10);
-
-    return this.bakkiAreaDraft.reviewDraft({
+    const userId = parseTrailingNumericId(session.user.id);
+    if (!userId) {
+      throw new Error('Invalid session user reference');
+    }
+    const draft = await this.bakkiAreaDraft.reviewDraft({
       draftRef,
       reviewerUserId: userId,
       approved,
       notes,
     });
+
+    await this.auditService.recordEvent({
+      actor: session.user.id,
+      message: approved
+        ? `Approved mobile draft ${draftRef}`
+        : `Rejected mobile draft ${draftRef}`,
+      payload: {
+        approved,
+        notes: notes ?? null,
+        reviewerUserId: userId,
+      },
+      targetModel: 'bakki_area_draft',
+      type: 'mobile.drafts.review',
+    });
+
+    return draft;
   }
 
   /**
    * Promote an approved draft to a real area.
    */
-  async promoteDraft(draftRef: string) {
-    return this.bakkiAreaDraft.promoteDraft(draftRef);
+  async promoteDraft(draftRef: string, sessionToken: string) {
+    const { session } = await this.authService.getSession(sessionToken);
+    if (!session?.user) {
+      throw new Error('Invalid session');
+    }
+    const areaRef = await this.bakkiAreaDraft.promoteDraft(draftRef);
+    await this.auditService.recordEvent({
+      actor: session.user.id,
+      message: `Promoted mobile draft ${draftRef} to area ${areaRef}`,
+      payload: {
+        areaRef,
+        draftRef,
+      },
+      targetModel: 'bakki_area_draft',
+      type: 'mobile.drafts.promote',
+    });
+    return areaRef;
   }
 
   /**
    * Delete a draft.
    */
-  async deleteDraft(draftRef: string) {
-    return this.bakkiAreaDraft.deleteDraft(draftRef);
+  async deleteDraft(draftRef: string, sessionToken: string) {
+    const { session } = await this.authService.getSession(sessionToken);
+    if (!session?.user) {
+      throw new Error('Invalid session');
+    }
+    const deleted = await this.bakkiAreaDraft.deleteDraft(draftRef);
+    if (deleted) {
+      await this.auditService.recordEvent({
+        actor: session.user.id,
+        message: `Deleted mobile draft ${draftRef}`,
+        payload: {
+          draftRef,
+        },
+        targetModel: 'bakki_area_draft',
+        type: 'mobile.drafts.delete',
+      });
+    }
+    return deleted;
   }
+}
+
+function normalizeBootstrapLimit(value?: number) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return DEFAULT_BOOTSTRAP_LIMIT;
+  }
+  return Math.max(1, Math.min(MAX_BOOTSTRAP_LIMIT, Math.floor(value)));
+}
+
+function parseBootstrapOffset(cursor?: string) {
+  if (!cursor) {
+    return 0;
+  }
+  const decoded = Buffer.from(cursor, 'base64').toString('utf8');
+  const value = Number.parseInt(decoded.replace('offset:', ''), 10);
+  if (!Number.isFinite(value) || value < 0) {
+    return 0;
+  }
+  return value;
+}
+
+function encodeBootstrapOffset(offset: number) {
+  return Buffer.from(`offset:${offset}`, 'utf8').toString('base64');
 }
 
 /**

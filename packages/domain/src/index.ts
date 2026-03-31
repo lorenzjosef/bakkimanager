@@ -47,6 +47,7 @@ export * from './phases';
 export * from './settings';
 export * from './species';
 export * from './tasks';
+export * from './tree-surveys';
 export * from './users';
 
 export const ROUTE_META: Record<BakkiViewId, BakkiRouteMeta> = {

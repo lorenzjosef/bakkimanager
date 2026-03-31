@@ -19,6 +19,19 @@ type MockBundle = {
   bakkiAreaMetrics: {
     listByZoneRefs: (zoneRefs: string[]) => Promise<Array<{ id: string }>>;
   };
+  bakkiAreaDraft: {
+    getDiagnosticsSummary: () => Promise<{
+      configured: boolean;
+      failedValidationCount: number;
+      lastReviewedAt: string | null;
+      lastSyncedAt: string | null;
+      pendingReviewCount: number;
+      promotedCount: number;
+      rejectedCount: number;
+      syncedCount: number;
+      totalDrafts: number;
+    }>;
+  };
   bakkiCore: {
     healthcheck: () => Promise<{
       appliedMigrationCount: number | null;
@@ -171,6 +184,19 @@ function createHealthService(overrides: Partial<MockBundle> = {}) {
     },
     bakkiAreaMetrics: {
       listByZoneRefs: async () => [{ id: 'metrics-1' }],
+    },
+    bakkiAreaDraft: {
+      getDiagnosticsSummary: async () => ({
+        configured: true,
+        failedValidationCount: 1,
+        lastReviewedAt: '2026-03-28T10:04:00.000Z',
+        lastSyncedAt: '2026-03-28T10:03:00.000Z',
+        pendingReviewCount: 2,
+        promotedCount: 5,
+        rejectedCount: 1,
+        syncedCount: 8,
+        totalDrafts: 9,
+      }),
     },
     bakkiCore: {
       healthcheck: async () => ({
@@ -344,6 +370,7 @@ function createHealthService(overrides: Partial<MockBundle> = {}) {
   const deps = { ...defaults, ...overrides };
   const service = new HealthService(
     deps.authService as never,
+    deps.bakkiAreaDraft as never,
     deps.bakkiAreaMetrics as never,
     deps.bakkiCore as never,
     deps.bakkiGeometry as never,
@@ -449,6 +476,7 @@ test('getOdooDiagnostics reports Bakki mirrors unavailable when Bakki Core is no
   assert.ok(diagnostics.syncHistory.some((item) => item.id === 'weather-provider'));
   assert.ok(diagnostics.syncHistory.some((item) => item.id === 'mirror-sync-unavailable'));
   assert.ok(diagnostics.syncHistory.some((item) => item.id === 'persisted-geometry-unavailable'));
+  assert.equal(diagnostics.mobile.pendingReviewCount, 2);
 });
 
 test('getOdooDiagnostics reports weather feed warnings without treating them as deployment blockers', async () => {

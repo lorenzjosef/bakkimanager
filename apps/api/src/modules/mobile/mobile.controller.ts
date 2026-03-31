@@ -3,9 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  ParseIntPipe,
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import type { Request } from 'express';
@@ -40,8 +42,15 @@ export class MobileController {
    * - User's draft areas
    */
   @Get('bootstrap')
-  getBootstrap(@Req() request: Request) {
-    return this.mobileService.getBootstrap(getRequestSessionToken(request));
+  getBootstrap(
+    @Req() request: Request,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.mobileService.getBootstrap(getRequestSessionToken(request), {
+      cursor,
+      limit,
+    });
   }
 
   /**
@@ -100,8 +109,8 @@ export class MobileController {
    */
   @OwnerOnly()
   @Post('area-drafts/:draftId/promote')
-  promoteDraft(@Param('draftId') draftId: string) {
-    return this.mobileService.promoteDraft(draftId);
+  promoteDraft(@Param('draftId') draftId: string, @Req() request: Request) {
+    return this.mobileService.promoteDraft(draftId, getRequestSessionToken(request));
   }
 
   /**
@@ -109,7 +118,7 @@ export class MobileController {
    */
   @OwnerOnly()
   @Delete('area-drafts/:draftId')
-  deleteDraft(@Param('draftId') draftId: string) {
-    return this.mobileService.deleteDraft(draftId);
+  deleteDraft(@Param('draftId') draftId: string, @Req() request: Request) {
+    return this.mobileService.deleteDraft(draftId, getRequestSessionToken(request));
   }
 }

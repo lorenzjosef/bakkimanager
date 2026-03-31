@@ -4,6 +4,7 @@ interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: unknown;
   headers?: Record<string, string>;
+  timeoutMs?: number;
 }
 
 interface ApiResponse<T> {
@@ -17,6 +18,7 @@ interface ApiError {
 }
 
 let sessionToken: string | null = null;
+const DEFAULT_TIMEOUT_MS = 20_000;
 
 export function setSessionToken(token: string | null) {
   sessionToken = token;
@@ -30,7 +32,7 @@ export async function apiRequest<T>(
   endpoint: string,
   options: ApiRequestOptions = {},
 ): Promise<ApiResponse<T>> {
-  const { method = 'GET', body, headers = {} } = options;
+  const { method = 'GET', body, headers = {}, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
 
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -44,11 +46,16 @@ export async function apiRequest<T>(
 
   const url = `${config.apiBaseUrl}${endpoint}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   const response = await fetch(url, {
     method,
     headers: requestHeaders,
     body: body ? JSON.stringify(body) : undefined,
+    signal: controller.signal,
   });
+  clearTimeout(timeoutId);
 
   // Check for session token in response header
   const responseToken = response.headers.get('x-bakki-session');
@@ -82,19 +89,19 @@ export async function apiRequest<T>(
  * Convenience client object for common HTTP methods.
  */
 export const apiClient = {
-  get<T>(endpoint: string, headers?: Record<string, string>) {
-    return apiRequest<T>(endpoint, { method: 'GET', headers });
+  get<T>(endpoint: string, headers?: Record<string, string>, timeoutMs?: number) {
+    return apiRequest<T>(endpoint, { method: 'GET', headers, timeoutMs });
   },
-  post<T>(endpoint: string, body?: unknown, headers?: Record<string, string>) {
-    return apiRequest<T>(endpoint, { method: 'POST', body, headers });
+  post<T>(endpoint: string, body?: unknown, headers?: Record<string, string>, timeoutMs?: number) {
+    return apiRequest<T>(endpoint, { method: 'POST', body, headers, timeoutMs });
   },
-  put<T>(endpoint: string, body?: unknown, headers?: Record<string, string>) {
-    return apiRequest<T>(endpoint, { method: 'PUT', body, headers });
+  put<T>(endpoint: string, body?: unknown, headers?: Record<string, string>, timeoutMs?: number) {
+    return apiRequest<T>(endpoint, { method: 'PUT', body, headers, timeoutMs });
   },
-  patch<T>(endpoint: string, body?: unknown, headers?: Record<string, string>) {
-    return apiRequest<T>(endpoint, { method: 'PATCH', body, headers });
+  patch<T>(endpoint: string, body?: unknown, headers?: Record<string, string>, timeoutMs?: number) {
+    return apiRequest<T>(endpoint, { method: 'PATCH', body, headers, timeoutMs });
   },
-  delete<T>(endpoint: string, headers?: Record<string, string>) {
-    return apiRequest<T>(endpoint, { method: 'DELETE', headers });
+  delete<T>(endpoint: string, headers?: Record<string, string>, timeoutMs?: number) {
+    return apiRequest<T>(endpoint, { method: 'DELETE', headers, timeoutMs });
   },
 };

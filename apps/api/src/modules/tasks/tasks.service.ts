@@ -16,6 +16,7 @@ import { BakkiGeometryService } from '../../bakki-core/bakki-geometry.service';
 import { BakkiMapAuditService } from '../../bakki-core/bakki-map-audit.service';
 import { BakkiTaskMirrorService } from '../../bakki-core/bakki-task-mirror.service';
 import { BakkiTaskTemplateService } from '../../bakki-core/bakki-task-template.service';
+import { BakkiTreeSurveyService } from '../../bakki-core/bakki-tree-survey.service';
 import { BakkiUserMirrorService } from '../../bakki-core/bakki-user-mirror.service';
 import { OdooService } from '../../odoo/odoo.service';
 import { AuditService } from '../audit/audit.service';
@@ -45,6 +46,7 @@ export class TasksService {
     private readonly authService: AuthService,
     private readonly bakkiTasks: BakkiTaskMirrorService,
     private readonly bakkiTaskTemplates: BakkiTaskTemplateService,
+    private readonly bakkiTreeSurvey: BakkiTreeSurveyService,
     private readonly bakkiUsers: BakkiUserMirrorService,
     private readonly bakkiMapAudit: BakkiMapAuditService,
     private readonly odoo: OdooService,
@@ -148,6 +150,7 @@ export class TasksService {
       bakkiGeometry: this.bakkiGeometry,
       bakkiMapAudit: this.bakkiMapAudit,
       bakkiTaskTemplates: this.bakkiTaskTemplates,
+      bakkiTreeSurvey: this.bakkiTreeSurvey,
       bakkiTasks: this.bakkiTasks,
       bakkiUsers: this.bakkiUsers,
       logger: this.logger,

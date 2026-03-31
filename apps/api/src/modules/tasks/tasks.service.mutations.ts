@@ -17,6 +17,7 @@ import type { BakkiGeometryService } from '../../bakki-core/bakki-geometry.servi
 import type { BakkiMapAuditService } from '../../bakki-core/bakki-map-audit.service';
 import type { BakkiTaskMirrorService } from '../../bakki-core/bakki-task-mirror.service';
 import type { BakkiTaskTemplateService } from '../../bakki-core/bakki-task-template.service';
+import type { BakkiTreeSurveyService } from '../../bakki-core/bakki-tree-survey.service';
 import type { BakkiUserMirrorService } from '../../bakki-core/bakki-user-mirror.service';
 import { inferTaskTypeFromTitle } from '../../odoo/odoo-task-mapping';
 import type { OdooService } from '../../odoo/odoo.service';
@@ -49,6 +50,40 @@ interface OdooProjectRecord {
   id: number;
 }
 
+interface TreePlotLookup {
+  createdByUserId?: number | null;
+  geometry: import('@bakki/domain').GeoJsonGeometry;
+  plotRef: string;
+}
+
+interface TreePlotSummaryLookup {
+  plotRef: string;
+}
+
+function isTreePlotLookup(value: unknown): value is TreePlotLookup {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as {
+    createdByUserId?: unknown;
+    geometry?: { coordinates?: unknown; type?: unknown };
+    plotRef?: unknown;
+  };
+  return (
+    typeof candidate.plotRef === 'string'
+    && typeof candidate.geometry?.type === 'string'
+    && candidate.geometry.coordinates !== undefined
+  );
+}
+
+function isTreePlotSummaryLookup(value: unknown): value is TreePlotSummaryLookup {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as { plotRef?: unknown };
+  return typeof candidate.plotRef === 'string';
+}
+
 interface TasksServiceMutationDeps {
   auditService: AuditService;
   authService: AuthService;
@@ -56,6 +91,7 @@ interface TasksServiceMutationDeps {
   bakkiGeometry: BakkiGeometryService;
   bakkiMapAudit: BakkiMapAuditService;
   bakkiTaskTemplates: BakkiTaskTemplateService;
+  bakkiTreeSurvey: BakkiTreeSurveyService;
   bakkiTasks: BakkiTaskMirrorService;
   bakkiUsers: BakkiUserMirrorService;
   logger: Pick<Logger, 'error'>;
@@ -333,17 +369,92 @@ export async function recordMonitoringResult(
       odoo: deps.odoo,
       project: task.project_id,
     });
-    const observation = await deps.bakkiAreaMetrics.recordObservation({
-      actorUserId: actor.profileId,
-      areaRef,
-      densityPer100Sqm: input.densityPer100Sqm,
-      treeCount:
-        typeof input.treeCount === 'number' ? Math.round(input.treeCount) : undefined,
-      notes: input.notes,
-      observedAt: input.observedAt,
-      taskRef: `task-${numericTaskId}`,
-    });
-    const observationId = observation.observationId;
+    const areaRefFromInput = input.areaId?.trim() || null;
+    const targetAreaRef = areaRefFromInput || areaRef;
+    if (!targetAreaRef) {
+      throw new BadRequestException('Monitoring task is not linked to a Bakki area.');
+    }
+    if (
+      typeof input.sampledAreaSqm === 'number'
+      && (!Number.isFinite(input.sampledAreaSqm) || input.sampledAreaSqm <= 0)
+    ) {
+      throw new BadRequestException('Sampled area must be a positive number.');
+    }
+    if (
+      typeof input.meanHeightM === 'number'
+      && (!Number.isFinite(input.meanHeightM) || input.meanHeightM < 0)
+    ) {
+      throw new BadRequestException('Mean height must be zero or a positive number.');
+    }
+    if (
+      typeof input.meanDiameterCm === 'number'
+      && (!Number.isFinite(input.meanDiameterCm) || input.meanDiameterCm < 0)
+    ) {
+      throw new BadRequestException('Mean diameter must be zero or a positive number.');
+    }
+
+    const projectedAreaMetrics = await deps.bakkiAreaMetrics.getByAreaRef(targetAreaRef);
+    const densitySource = projectedAreaMetrics?.source;
+    const shouldRecordAsPlotSample = densitySource === 'plot_estimate_projection'
+      || (deps.bakkiTreeSurvey.isConfigured() && Boolean(areaRefFromInput));
+
+    let observationId: string;
+    if (shouldRecordAsPlotSample && deps.bakkiTreeSurvey.isConfigured()) {
+      const areaGeometry = await deps.bakkiGeometry.getAreaGeometrySnapshotByRef(targetAreaRef);
+      if (!areaGeometry) {
+        throw new BadRequestException('Monitoring area geometry was not found.');
+      }
+
+      const candidatePlots = (await deps.bakkiTreeSurvey.listPlots())
+        .filter((plot) => isTreePlotSummaryLookup(plot));
+      const candidateDetails = await Promise.all(
+        candidatePlots.map((plot) => deps.bakkiTreeSurvey.getPlot(plot.plotRef)),
+      );
+      const matchingPlots = candidateDetails.filter((plot) => {
+        if (!isTreePlotLookup(plot)) {
+          return false;
+        }
+        if (
+          typeof plot.createdByUserId === 'number'
+          && plot.createdByUserId !== actor.profileId
+        ) {
+          return false;
+        }
+        return intersectsGeometry(plot.geometry, areaGeometry);
+      });
+      if (matchingPlots.length === 0) {
+        throw new BadRequestException('No survey plot intersects the selected monitoring area.');
+      }
+      const selectedPlot = matchingPlots.find(isTreePlotLookup);
+      if (!selectedPlot) {
+        throw new BadRequestException('No survey plot intersects the selected monitoring area.');
+      }
+      const sample = await deps.bakkiTreeSurvey.recordSample(selectedPlot.plotRef, {
+        actorUserId: actor.profileId,
+        densityPer100Sqm: input.densityPer100Sqm,
+        treeCount:
+          typeof input.treeCount === 'number' ? Math.round(input.treeCount) : undefined,
+        sampledAreaSqm: input.sampledAreaSqm,
+        meanHeightM: input.meanHeightM,
+        meanDiameterCm: input.meanDiameterCm,
+        taskRef: `task-${numericTaskId}`,
+        notes: input.notes,
+        sampledAt: input.observedAt,
+      });
+      observationId = sample.id;
+    } else {
+      const observation = await deps.bakkiAreaMetrics.recordObservation({
+        actorUserId: actor.profileId,
+        areaRef: targetAreaRef,
+        densityPer100Sqm: input.densityPer100Sqm,
+        treeCount:
+          typeof input.treeCount === 'number' ? Math.round(input.treeCount) : undefined,
+        notes: input.notes,
+        observedAt: input.observedAt,
+        taskRef: `task-${numericTaskId}`,
+      });
+      observationId = observation.observationId;
+    }
 
     await Promise.all([
       deps.odoo.executeKw<boolean>('project.task', 'write', [
@@ -361,7 +472,7 @@ export async function recordMonitoringResult(
         },
         'done',
         {
-          areaRef,
+          areaRef: targetAreaRef,
           monitoringDensityPer100Sqm: input.densityPer100Sqm,
           monitoringTreeCount:
             typeof input.treeCount === 'number' ? Math.round(input.treeCount) : null,
@@ -371,35 +482,38 @@ export async function recordMonitoringResult(
       ),
     ]);
 
+    const auditPayload: Record<string, unknown> = {
+      areaId: targetAreaRef,
+      densityPer100Sqm: input.densityPer100Sqm,
+      treeCount: typeof input.treeCount === 'number' ? Math.round(input.treeCount) : null,
+      source: shouldRecordAsPlotSample ? 'plot_estimate_projection' : 'legacy_area_metrics',
+    };
     await deps.auditService.recordEvent({
       actor: actor.session.user.id,
       message: `Recorded monitoring result for task ${numericTaskId}`,
       type: 'task.monitoring_result',
       targetModel: 'project.task',
       targetResId: numericTaskId,
-      payload: {
-        areaId: areaRef,
-        densityPer100Sqm: input.densityPer100Sqm,
-        treeCount: typeof input.treeCount === 'number' ? Math.round(input.treeCount) : null,
-      },
+      payload: auditPayload,
     });
     await deps.bakkiMapAudit.create({
       editorUserId: actor.profileId ?? null,
       entityType: 'area_metrics',
-      entityRef: areaRef,
+      entityRef: targetAreaRef,
       changeType: 'monitoring_result',
-      changeSummary: `Recorded monitoring result for ${areaRef}`,
+      changeSummary: `Recorded monitoring result for ${targetAreaRef}`,
       diffPayload: {
         densityPer100Sqm: input.densityPer100Sqm,
         treeCount: typeof input.treeCount === 'number' ? Math.round(input.treeCount) : null,
         taskId: `task-${numericTaskId}`,
         observationId,
+        source: shouldRecordAsPlotSample ? 'plot_estimate_projection' : 'legacy_area_metrics',
       },
     });
 
     return {
       taskId: `task-${numericTaskId}`,
-      areaId: areaRef,
+      areaId: targetAreaRef,
       observationId,
       densityPer100Sqm: input.densityPer100Sqm,
       treeCount: typeof input.treeCount === 'number' ? Math.round(input.treeCount) : null,
@@ -411,6 +525,58 @@ export async function recordMonitoringResult(
     deps.logger.error(`Monitoring result write failed: ${message}`);
     throw new BadRequestException('Monitoring result could not be recorded.');
   }
+}
+
+function intersectsGeometry(
+  left: import('@bakki/domain').GeoJsonGeometry,
+  right: import('@bakki/domain').GeoJsonGeometry,
+) {
+  const leftBbox = extractBbox(left.coordinates);
+  const rightBbox = extractBbox(right.coordinates);
+  return !(
+    leftBbox.maxLng < rightBbox.minLng
+    || leftBbox.minLng > rightBbox.maxLng
+    || leftBbox.maxLat < rightBbox.minLat
+    || leftBbox.minLat > rightBbox.maxLat
+  );
+}
+
+function extractBbox(coordinates: unknown) {
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  const walk = (value: unknown): void => {
+    if (!Array.isArray(value)) {
+      return;
+    }
+    if (
+      value.length >= 2
+      && typeof value[0] === 'number'
+      && typeof value[1] === 'number'
+    ) {
+      const lng = value[0];
+      const lat = value[1];
+      minLng = Math.min(minLng, lng);
+      maxLng = Math.max(maxLng, lng);
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
+      return;
+    }
+    for (const child of value) {
+      walk(child);
+    }
+  };
+  walk(coordinates);
+  if (!Number.isFinite(minLat)) {
+    return {
+      minLng: 0,
+      maxLng: 0,
+      minLat: 0,
+      maxLat: 0,
+    };
+  }
+  return { minLng, maxLng, minLat, maxLat };
 }
 
 async function requireOwnerActor(

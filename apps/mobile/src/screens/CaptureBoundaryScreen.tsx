@@ -35,6 +35,7 @@ export function CaptureBoundaryScreen() {
 
   const mapRef = useRef<MapView>(null);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
+  const isMounted = useRef(true);
 
   const zone = useOfflineStore((s) => s.getZone(zoneId));
 
@@ -49,14 +50,16 @@ export function CaptureBoundaryScreen() {
 
   // Request location permissions and get initial position
   useEffect(() => {
-    let mounted = true;
+    isMounted.current = true;
 
     async function setupLocation() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-          setLocationError('Location permission is required to capture areas');
-          setIsLoadingLocation(false);
+          if (isMounted.current) {
+            setLocationError('Location permission is required to capture areas');
+            setIsLoadingLocation(false);
+          }
           return;
         }
 
@@ -64,12 +67,12 @@ export function CaptureBoundaryScreen() {
           accuracy: Location.Accuracy.High,
         });
 
-        if (mounted) {
+        if (isMounted.current) {
           setCurrentLocation(location);
           setIsLoadingLocation(false);
         }
       } catch (error) {
-        if (mounted) {
+        if (isMounted.current) {
           setLocationError('Unable to get current location');
           setIsLoadingLocation(false);
         }
@@ -79,9 +82,10 @@ export function CaptureBoundaryScreen() {
     setupLocation();
 
     return () => {
-      mounted = false;
+      isMounted.current = false;
       if (locationSubscription.current) {
         locationSubscription.current.remove();
+        locationSubscription.current = null;
       }
     };
   }, []);
@@ -93,23 +97,43 @@ export function CaptureBoundaryScreen() {
     setIsCapturing(true);
     setPoints([]);
 
-    locationSubscription.current = await Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.High,
-        timeInterval: LOCATION_UPDATE_INTERVAL,
-        distanceInterval: 2, // meters
-      },
-      (location) => {
-        const point: CapturedPoint = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          accuracy: location.coords.accuracy || 10,
-          timestamp: new Date().toISOString(),
-        };
-        setPoints((prev) => [...prev, point]);
-        setCurrentLocation(location);
+    try {
+      const subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: LOCATION_UPDATE_INTERVAL,
+          distanceInterval: 2, // meters
+        },
+        (location) => {
+          if (!isMounted.current) {
+            locationSubscription.current?.remove();
+            locationSubscription.current = null;
+            return;
+          }
+          const point: CapturedPoint = {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            accuracy: location.coords.accuracy || 10,
+            timestamp: new Date().toISOString(),
+          };
+          setPoints((prev) => [...prev, point]);
+          setCurrentLocation(location);
+        }
+      );
+
+      // Only set if still mounted
+      if (isMounted.current) {
+        locationSubscription.current = subscription;
+      } else {
+        // Unmounted before subscription was set, clean up immediately
+        subscription.remove();
       }
-    );
+    } catch (error) {
+      if (isMounted.current) {
+        setIsCapturing(false);
+        Alert.alert('Error', 'Failed to start location tracking. Please try again.');
+      }
+    }
   }, [isBoundaryWalk]);
 
   // Stop boundary walk tracking

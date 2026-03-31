@@ -14,6 +14,7 @@ import { ContractsModule } from './modules/contracts/contracts.module';
 import { PhasesModule } from './modules/phases/phases.module';
 import { SpeciesModule } from './modules/species/species.module';
 import { TasksModule } from './modules/tasks/tasks.module';
+import { TreeSurveysModule } from './modules/tree-surveys/tree-surveys.module';
 import { UsersModule } from './modules/users/users.module';
 import { SessionAuthGuard, RolesGuard } from './common/guards';
 
@@ -45,6 +46,7 @@ import { SessionAuthGuard, RolesGuard } from './common/guards';
     MobileModule,
     PhasesModule,
     TasksModule,
+    TreeSurveysModule,
     MediaModule,
   ],
   providers: [

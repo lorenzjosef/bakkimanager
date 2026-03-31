@@ -10,6 +10,7 @@ import type {
   SettingsOdooDiagnostics,
 } from '@bakki/domain';
 import { BakkiCoreService } from '../../bakki-core/bakki-core.service';
+import { BakkiAreaDraftService } from '../../bakki-core/bakki-area-draft.service';
 import { BakkiAreaMetricsService } from '../../bakki-core/bakki-area-metrics.service';
 import { BakkiGeometryService } from '../../bakki-core/bakki-geometry.service';
 import { BakkiTaskMirrorService } from '../../bakki-core/bakki-task-mirror.service';
@@ -35,6 +36,7 @@ import {
 export class HealthService {
   constructor(
     private readonly authService: AuthService,
+    private readonly bakkiAreaDraft: BakkiAreaDraftService,
     private readonly bakkiAreaMetrics: BakkiAreaMetricsService,
     private readonly bakkiCore: BakkiCoreService,
     private readonly bakkiGeometry: BakkiGeometryService,
@@ -60,9 +62,10 @@ export class HealthService {
 
   async getOdooDiagnostics(): Promise<SettingsOdooDiagnostics> {
     const checkedAt = new Date().toISOString();
-    const [bakkiCore, geometryPersistence, odoo, weather] = await Promise.all([
+    const [bakkiCore, geometryPersistence, mobile, odoo, weather] = await Promise.all([
       this.getBakkiCoreHealth(),
       this.bakkiGeometry.getPersistedGeometryCounts(),
+      this.bakkiAreaDraft.getDiagnosticsSummary(),
       this.odoo.healthcheck(),
       this.dashboardWeather.getHealthStatus(),
     ]);
@@ -103,6 +106,7 @@ export class HealthService {
       geometryPersistence,
       geometrySeed,
       media,
+      mobile,
       mirrors: {
         users,
         tasks,

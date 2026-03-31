@@ -10,9 +10,10 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Polygon, Marker, PROVIDER_DEFAULT, Region } from 'react-native-maps';
+import MapView, { LocalTile, Polygon, Marker, PROVIDER_DEFAULT, Region } from 'react-native-maps';
 import { useOfflineStore, type CachedArea, type CachedZone } from '@bakki/mobile-offline';
 import { useOfflineSync } from '../hooks';
+import { ensureOfflineTileCache, getLocalTilePathTemplate } from '../map/tileCache';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -31,6 +32,26 @@ function getZoneColor(index: number): string {
 
 function coordsToLatLng(coordinates: number[][]): Array<{ latitude: number; longitude: number }> {
   return coordinates.map(([lng, lat]) => ({ latitude: lat, longitude: lng }));
+}
+
+function getFirstRingCoordinates(
+  geometry: unknown,
+): number[][] | null {
+  if (!geometry || typeof geometry !== 'object') {
+    return null;
+  }
+
+  const candidate = geometry as { type?: string; coordinates?: unknown };
+  if (candidate.type === 'Polygon' && Array.isArray(candidate.coordinates)) {
+    const ring = candidate.coordinates[0];
+    return Array.isArray(ring) ? (ring as number[][]) : null;
+  }
+  if (candidate.type === 'MultiPolygon' && Array.isArray(candidate.coordinates)) {
+    const polygon = candidate.coordinates[0];
+    const ring = Array.isArray(polygon) ? polygon[0] : null;
+    return Array.isArray(ring) ? (ring as number[][]) : null;
+  }
+  return null;
 }
 
 interface AreaDetailModalProps {
@@ -89,11 +110,14 @@ export function MapScreen() {
   const mapRef = useRef<MapView>(null);
   const [selectedArea, setSelectedArea] = useState<CachedArea | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [localTilePath, setLocalTilePath] = useState<string | null>(getLocalTilePathTemplate());
 
-  const { syncData, isSyncing, syncStatus, lastSyncAt } = useOfflineSync();
-  const ranch = useOfflineStore((s) => s.getRanch());
-  const zones = useOfflineStore((s) => s.getZones());
-  const areas = useOfflineStore((s) => s.getAreas());
+  const { syncData, isOnline, isSyncing, syncStatus, lastSyncAt } = useOfflineSync();
+  const ranch = useOfflineStore((s) => s.ranch);
+  const zonesById = useOfflineStore((s) => s.zones);
+  const areasById = useOfflineStore((s) => s.areas);
+  const zones = useMemo(() => Object.values(zonesById), [zonesById]);
+  const areas = useMemo(() => Object.values(areasById), [areasById]);
 
   // Create a zone index for coloring
   const zoneColorMap = useMemo(() => {
@@ -123,6 +147,31 @@ export function MapScreen() {
       longitudeDelta: 0.1,
     };
   }, [ranch]);
+
+  useEffect(() => {
+    if (!ranch?.boundingBox) {
+      return;
+    }
+
+    let cancelled = false;
+    void ensureOfflineTileCache(ranch.boundingBox).then((result) => {
+      if (cancelled) {
+        return;
+      }
+      setLocalTilePath((currentPath) => (
+        currentPath === result.pathTemplate ? currentPath : result.pathTemplate
+      ));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    ranch?.boundingBox?.minLat,
+    ranch?.boundingBox?.maxLat,
+    ranch?.boundingBox?.minLng,
+    ranch?.boundingBox?.maxLng,
+  ]);
 
   const handleAreaPress = useCallback((area: CachedArea) => {
     setSelectedArea(area);
@@ -191,27 +240,39 @@ export function MapScreen() {
         showsMyLocationButton={false}
         mapType="terrain"
       >
+        {localTilePath && (
+          <LocalTile
+            pathTemplate={localTilePath}
+            tileSize={256}
+            zIndex={-1}
+          />
+        )}
+
         {/* Render ranch boundary */}
         {ranch?.geometry && mapReady && (
-          <Polygon
-            coordinates={coordsToLatLng(
-              (ranch.geometry as { coordinates: number[][][] }).coordinates[0]
-            )}
-            strokeColor="#1a3518"
-            strokeWidth={3}
-            fillColor="rgba(26, 53, 24, 0.05)"
-          />
+          (() => {
+            const ring = getFirstRingCoordinates(ranch.geometry);
+            if (!ring) return null;
+            return (
+              <Polygon
+                coordinates={coordsToLatLng(ring)}
+                strokeColor="#1a3518"
+                strokeWidth={3}
+                fillColor="rgba(26, 53, 24, 0.05)"
+              />
+            );
+          })()
         )}
 
         {/* Render zones */}
         {zones.map((zone, index) => {
-          const geometry = zone.geometry as { coordinates: number[][][] };
-          if (!geometry?.coordinates?.[0]) return null;
+          const ring = getFirstRingCoordinates(zone.geometry);
+          if (!ring) return null;
 
           return (
             <Polygon
               key={zone.id}
-              coordinates={coordsToLatLng(geometry.coordinates[0])}
+              coordinates={coordsToLatLng(ring)}
               strokeColor={getZoneColor(index)}
               strokeWidth={2}
               fillColor={`${getZoneColor(index)}20`}
@@ -221,15 +282,15 @@ export function MapScreen() {
 
         {/* Render areas */}
         {areas.map((area) => {
-          const geometry = area.geometry as { coordinates: number[][][] };
-          if (!geometry?.coordinates?.[0]) return null;
+          const ring = getFirstRingCoordinates(area.geometry);
+          if (!ring) return null;
 
           const zoneColor = zoneColorMap[area.zoneId] || '#2e7d32';
 
           return (
             <Polygon
               key={area.id}
-              coordinates={coordsToLatLng(geometry.coordinates[0])}
+              coordinates={coordsToLatLng(ring)}
               strokeColor={zoneColor}
               strokeWidth={2}
               fillColor={`${zoneColor}40`}
@@ -241,13 +302,12 @@ export function MapScreen() {
 
         {/* Area center markers */}
         {areas.map((area) => {
-          const geometry = area.geometry as { coordinates: number[][][] };
-          if (!geometry?.coordinates?.[0]) return null;
+          const ring = getFirstRingCoordinates(area.geometry);
+          if (!ring) return null;
 
           // Calculate center of polygon
-          const coords = geometry.coordinates[0];
-          const centerLat = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
-          const centerLng = coords.reduce((sum, c) => sum + c[0], 0) / coords.length;
+          const centerLat = ring.reduce((sum, c) => sum + c[1], 0) / ring.length;
+          const centerLng = ring.reduce((sum, c) => sum + c[0], 0) / ring.length;
 
           return (
             <Marker
@@ -295,9 +355,9 @@ export function MapScreen() {
       </View>
 
       {/* Offline indicator */}
-      {syncStatus === 'stale' && (
+      {(!isOnline || syncStatus === 'error') && (
         <View style={styles.offlineIndicator}>
-          <Text style={styles.offlineText}>📴 Offline Mode</Text>
+          <Text style={styles.offlineText}>📴 Using cached map data</Text>
         </View>
       )}
 

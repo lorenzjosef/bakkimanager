@@ -8,6 +8,7 @@ interface UIState {
   mapTaskAreaLabel: string | null;
   mapAreaOverlayOpen: boolean;
   mapManagementOverlayOpen: boolean;
+  draftReviewModalOpen: boolean;
   speciesDetailOpen: boolean;
   selectedSpeciesId: string | null;
   selectedViewerMapSelection: BakkiMapSelection | null;
@@ -18,6 +19,8 @@ interface UIState {
   closeMapAreaOverlay: () => void;
   openManagementOverlay: (selection: BakkiMapSelection) => void;
   closeManagementOverlay: () => void;
+  openDraftReviewModal: () => void;
+  closeDraftReviewModal: () => void;
   openSpeciesDetail: (speciesId: string) => void;
   closeSpeciesDetail: () => void;
   resetRouteScopedUI: () => void;
@@ -32,6 +35,7 @@ export const useUIStore = create<UIState>((set) => ({
   mapTaskAreaLabel: null,
   mapAreaOverlayOpen: false,
   mapManagementOverlayOpen: false,
+  draftReviewModalOpen: false,
   speciesDetailOpen: false,
   selectedSpeciesId: null,
   selectedViewerMapSelection: null,
@@ -69,6 +73,10 @@ export const useUIStore = create<UIState>((set) => ({
     ),
   closeManagementOverlay: () =>
     set((state) => (state.mapManagementOverlayOpen ? { mapManagementOverlayOpen: false } : state)),
+  openDraftReviewModal: () =>
+    set((state) => (state.draftReviewModalOpen ? state : { draftReviewModalOpen: true })),
+  closeDraftReviewModal: () =>
+    set((state) => (state.draftReviewModalOpen ? { draftReviewModalOpen: false } : state)),
   openSpeciesDetail: (speciesId) =>
     set((state) =>
       state.speciesDetailOpen && state.selectedSpeciesId === speciesId
@@ -80,6 +88,7 @@ export const useUIStore = create<UIState>((set) => ({
     set((state) =>
       state.mapAreaOverlayOpen
       || state.mapManagementOverlayOpen
+      || state.draftReviewModalOpen
       || state.speciesDetailOpen
       || state.selectedSpeciesId
       || state.selectedViewerMapSelection
@@ -87,6 +96,7 @@ export const useUIStore = create<UIState>((set) => ({
         ? {
             mapAreaOverlayOpen: false,
             mapManagementOverlayOpen: false,
+            draftReviewModalOpen: false,
             speciesDetailOpen: false,
             selectedSpeciesId: null,
             selectedViewerMapSelection: null,

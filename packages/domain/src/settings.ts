@@ -65,6 +65,18 @@ export interface WeatherProviderHealth {
   provider: 'open-meteo';
 }
 
+export interface MobileDraftDiagnosticsSummary {
+  configured: boolean;
+  failedValidationCount: number;
+  lastReviewedAt: string | null;
+  lastSyncedAt: string | null;
+  pendingReviewCount: number;
+  promotedCount: number;
+  rejectedCount: number;
+  syncedCount: number;
+  totalDrafts: number;
+}
+
 export interface DeploymentBlocker {
   detail: string;
   id: string;
@@ -206,6 +218,7 @@ export interface SettingsOdooDiagnostics {
   geometryPersistence: GeometryPersistenceSummary;
   geometrySeed: GeometrySeedValidationStatus;
   media: MediaUploadStatus;
+  mobile: MobileDraftDiagnosticsSummary;
   mirrors: {
     tasks: MirrorSyncHealthSummary;
     users: MirrorSyncHealthSummary;

@@ -103,7 +103,14 @@ export interface MobileBootstrapResponse {
   zones: MobileBootstrapZone[];
   areas: MobileBootstrapArea[];
   drafts: MobileBootstrapDraft[];
+  page: MobileBootstrapPage;
   serverTime: string;
+}
+
+export interface MobileBootstrapPage {
+  cursor: string | null;
+  hasMore: boolean;
+  limit: number;
 }
 
 export interface MobileBootstrapUser {

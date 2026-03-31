@@ -20,6 +20,7 @@ export const MAP_MANAGEMENT_DATA_QUERY_KEY = ['map-management-data'] as const;
 export const MAP_RANCH_GEOMETRY_QUERY_KEY = ['map-ranch-geometry'] as const;
 export const MAP_ZONE_GEOMETRY_QUERY_KEY = ['map-zone-geometry'] as const;
 export const MAP_AREA_GEOMETRY_QUERY_KEY = ['map-area-geometry'] as const;
+export const MAP_DRAFT_AREAS_QUERY_KEY = ['map-draft-areas'] as const;
 
 export const PLANTING_PHASE_OVERVIEW_QUERY_KEY = ['planting-phase-overview'] as const;
 export const PLANTING_WIZARD_DATA_QUERY_KEY = ['planting-wizard-data'] as const;

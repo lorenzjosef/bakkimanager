@@ -6,6 +6,7 @@ import {
 import { BakkiAreaMetricsService } from '../../bakki-core/bakki-area-metrics.service';
 import { BakkiPhaseService } from '../../bakki-core/bakki-phase.service';
 import { BakkiGeometryService } from '../../bakki-core/bakki-geometry.service';
+import { BakkiTreeSurveyService } from '../../bakki-core/bakki-tree-survey.service';
 import { BakkiUserMirrorService } from '../../bakki-core/bakki-user-mirror.service';
 import { BakkiSpeciesService } from '../../bakki-core/bakki-species.service';
 import { OdooService } from '../../odoo/odoo.service';
@@ -32,6 +33,7 @@ export class PhasesService {
     private readonly authService: AuthService,
     private readonly bakkiAreaMetrics: BakkiAreaMetricsService,
     private readonly bakkiGeometry: BakkiGeometryService,
+    private readonly bakkiTreeSurvey: BakkiTreeSurveyService,
     private readonly bakkiPhases: BakkiPhaseService,
     private readonly bakkiSpecies: BakkiSpeciesService,
     private readonly bakkiUsers: BakkiUserMirrorService,
@@ -65,7 +67,10 @@ export class PhasesService {
             .filter(Boolean),
         ),
       );
-      const liveAreaMetrics = this.bakkiAreaMetrics.isConfigured() && areaRefs.length > 0
+      const liveAreaMetrics = (
+        this.bakkiAreaMetrics.isConfigured()
+        || this.bakkiTreeSurvey.isConfigured()
+      ) && areaRefs.length > 0
         ? await this.bakkiAreaMetrics.listByAreaRefs(areaRefs)
         : [];
       const areaMetricsByAreaRef = new Map(liveAreaMetrics.map((record) => [record.areaRef, record] as const));

@@ -40,6 +40,9 @@ function createDashboardService(overrides: Partial<{
       title: string;
     }>>;
   };
+  bakkiTreeSurvey: {
+    isConfigured: () => boolean;
+  };
   dashboardWeather: {
     getCurrentConditions: () => Promise<{
       conditionsCopy: string;
@@ -81,6 +84,9 @@ function createDashboardService(overrides: Partial<{
       isConfigured: () => false,
       listProgramCandidates: async () => [],
       listByOdooTaskIds: async () => new Map(),
+    }) as any,
+    (overrides.bakkiTreeSurvey ?? {
+      isConfigured: () => false,
     }) as any,
     (overrides.odoo ?? {
       isConfigured: () => false,
